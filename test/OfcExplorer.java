@@ -7,6 +7,13 @@ import javax.swing.tree.*;
 import javax.swing.event.*;
 import javax.imageio.ImageIO;
 import java.lang.Thread ;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 
 import com.connectedway.io.*;
 
@@ -87,7 +94,7 @@ public class OfcExplorer
 	}
     }
 
-    public OfcExplorer()
+    public OfcExplorer(String config_file)
     {
 	super("Open Files Java Explorer");
 	setSize(400, 300);
@@ -99,8 +106,7 @@ public class OfcExplorer
 	DefaultMutableTreeNode node;
 
 	framework = Framework.getFramework() ;
-	framework.init() ;
-	framework.load(new File ("BlueShare/Debug/BlueConfig.xml")) ;
+	framework.load(new File (config_file)) ;
 	framework.startup() ;
 
 	File[] roots = File.listRoots();
@@ -199,7 +205,7 @@ public class OfcExplorer
 			String name = f.getName().toUpperCase() ;
 			if (name.endsWith(".JPEG") || name.endsWith(".JPG")) {
 			    JFrame frame = new JFrame(f.getName()) ;
-			    Panel panel = new BlueJpeg(f) ;
+			    Panel panel = new Jpeg(f) ;
 			    frame.getContentPane().add(panel) ;
 			    frame.setSize(Toolkit.getDefaultToolkit().getScreenSize()) ;
 			    frame.setVisible(true) ;
@@ -582,7 +588,7 @@ public class OfcExplorer
 		    m_tree.repaint();
 		    JOptionPane.showMessageDialog
 			(OfcExplorer.this, 
-			 "Delete option is not implemented",
+			 "Info option is not implemented",
 			 "Info", JOptionPane.INFORMATION_MESSAGE);
 		}
 	    };
@@ -911,7 +917,7 @@ public class OfcExplorer
 
     public static void main(String argv[]) 
     {
-	new OfcExplorer();
+	new OfcExplorer(argv[0]);
     }
 }
 
@@ -1109,8 +1115,8 @@ class FileNode
 		for (int i=0; i<v.size(); i++) {
 		    FileNode nd = (FileNode)v.elementAt(i);
 		    IconData idata = 
-			new IconData(Explorer.ICON_FOLDER, 
-				     Explorer.ICON_EXPANDEDFOLDER, nd);
+			new IconData(OfcExplorer.ICON_FOLDER, 
+				     OfcExplorer.ICON_EXPANDEDFOLDER, nd);
 		    DefaultMutableTreeNode node = new 
 			DefaultMutableTreeNode(idata);
 

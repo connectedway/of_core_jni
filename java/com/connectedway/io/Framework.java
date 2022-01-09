@@ -476,6 +476,8 @@ public class Framework implements Serializable
      */
     public native void update () ;
 
+    public native void println(String output);
+
     static {
 	System.loadLibrary("of_core_jni") ;
 

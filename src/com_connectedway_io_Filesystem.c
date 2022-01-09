@@ -858,13 +858,15 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listFiles
 		  jlong size = ((jlong) find_data->nFileSizeHigh << 32) | (jlong) find_data->nFileSizeLow ;
 		  (*env)->CallVoidMethod (env, objFile2, midSetLength, size) ;
 
+#if 0
 		  jmethodID midSetDate = (*env)->GetMethodID(env, clsOfcFile, 
 							     "setDate",
 							     "(J)V") ;
 		  jlong date = ((jlong) find_data->ftLastWriteTime.dwHighDateTime << 32) | 
 		    (jlong) find_data->ftLastWriteTime.dwLowDateTime ;
-		  (*env)->CallVoidMethod (env, objFile2, midSetDate, date) ;
 
+		  (*env)->CallVoidMethod (env, objFile2, midSetDate, date) ;
+#endif
 		  (*env)->SetObjectArrayElement (env, jarrayFiles, i, objFile2) ;
 		  (*env)->DeleteLocalRef (env, objFile2) ;
 		}
@@ -1134,7 +1136,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listRoots
   jobject objFile ;
 
   clsOfcFile = (*env)->FindClass (env, "com/connectedway/io/File") ;
-  jarrayFiles = (*env)->NewObjectArray (env, 3, clsOfcFile, NULL) ;
+  jarrayFiles = (*env)->NewObjectArray (env, 1, clsOfcFile, NULL) ;
   (*env)->DeleteLocalRef (env, clsOfcFile) ;
 
   clsFileSystem = (*env)->GetObjectClass (env, objFs) ;
@@ -1144,6 +1146,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listRoots
   (*env)->DeleteLocalRef (env, clsFileSystem) ;
 
   sep = (*env)->CallByteMethod(env, objFs, midGetSeparator) ;
+#if 0
   sepstr[0] = (char) sep ;
   sepstr[1] = (char) sep ;
   sepstr[2] = '\0' ;
@@ -1153,21 +1156,24 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listRoots
   (*env)->DeleteLocalRef (env, jstrFile) ;
   (*env)->SetObjectArrayElement (env, jarrayFiles, 0, objFile) ;
   (*env)->DeleteLocalRef (env, objFile) ;
-
+#endif
+  
   sepstr[0] = sep ;
   sepstr[1] = '\0' ;
 
   jstrFile = (*env)->NewStringUTF (env, sepstr) ;
   objFile = new_file (env, jstrFile) ;
   (*env)->DeleteLocalRef (env, jstrFile) ;
-  (*env)->SetObjectArrayElement (env, jarrayFiles, 1, objFile) ;
+  (*env)->SetObjectArrayElement (env, jarrayFiles, 0, objFile) ;
   (*env)->DeleteLocalRef (env, objFile) ;
 
+#if 0
   jstrFile = (*env)->NewStringUTF (env, "Bookmarks:") ;
   objFile = new_file (env, jstrFile) ;
   (*env)->DeleteLocalRef (env, jstrFile) ;
   (*env)->SetObjectArrayElement (env, jarrayFiles, 2, objFile) ;
   (*env)->DeleteLocalRef (env, objFile) ;
+#endif
 
   return (jarrayFiles) ;
 }

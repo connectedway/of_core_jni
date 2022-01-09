@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.20.0)
-project(HelloWorld VERSION 1.0.1 DESCRIPTION "OpenFiles JNI")
+project(jni_test VERSION 1.0.1 DESCRIPTION "OpenFiles JNI Tests")
 
 find_package(Java REQUIRED)
 include(UseJava)
 
-add_jar(HelloWorld HelloWorld.java)
+add_jar(OfcExplorer
+	SOURCES OfcExplorer.java
+	INCLUDE_JARS ${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar
+)
 
-add_test(NAME javabuild COMMAND ${Java_JAVA_EXECUTABLE} -cp ${HelloWorld_BINARY_DIR}/HelloWorld.jar HelloWorld)
+add_test(NAME ofc_explorer COMMAND ${Java_JAVA_EXECUTABLE} -Djava.library.path=${of_core_jni_BINARY_DIR} -cp ${jni_test_BINARY_DIR}/OfcExplorer.jar:${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar OfcExplorer ${openfiles_SOURCE_DIR}/configs/java_debug.xml)
+
+
