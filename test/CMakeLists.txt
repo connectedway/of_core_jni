@@ -9,6 +9,12 @@ add_jar(OfcExplorer
 	INCLUDE_JARS ${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar
 )
 
-add_test(NAME ofc_explorer COMMAND ${Java_JAVA_EXECUTABLE} -Djava.library.path=${of_core_jni_BINARY_DIR} -cp ${jni_test_BINARY_DIR}/OfcExplorer.jar:${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar OfcExplorer ${openfiles_SOURCE_DIR}/configs/java_debug.xml)
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  set(OF_CLASSPATH "${jni_test_BINARY_DIR}/OfcExplorer.jar\;${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar")
+else()
+  set(OF_CLASSPATH "${jni_test_BINARY_DIR}/OfcExplorer.jar:${JavaOpenFiles_BINARY_DIR}/JavaOpenFiles.jar")
+endif()
+
+add_test(NAME ofc_explorer COMMAND ${Java_JAVA_EXECUTABLE} -Djava.library.path=${of_core_jni_BINARY_DIR} -cp ${OF_CLASSPATH} OfcExplorer ${openfiles_SOURCE_DIR}/configs/java_debug.xml)
 
 
