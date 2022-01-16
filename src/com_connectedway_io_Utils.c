@@ -198,7 +198,7 @@ jobject new_file_from_path (JNIEnv *env, OFC_LPCTSTR path)
   jstrPath = (*env)->NewString (env, jPath, (jsize) jstrlen (jPath)) ;
   ofc_free (jPath) ;
 
-  objFile =  (env, jstrPath) ;
+  objFile =  new_file(env, jstrPath) ;
   (*env)->DeleteLocalRef (env, jstrPath) ;
 
   return (objFile) ;

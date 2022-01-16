@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(of_core_jni VERSION 1.0.1 DESCRIPTION "OpenFiles JNI")
 
+set(ENV{JAVA_HOME} /Library/Java/JavaVirtualMachines/openlogic-openjdk-11.jdk/Contents/Home)
 find_package(JNI REQUIRED)
 
 if (JNI_FOUND)
