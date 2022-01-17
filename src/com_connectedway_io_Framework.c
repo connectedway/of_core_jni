@@ -1470,7 +1470,6 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_removeInterface
   ofc_framework_remove_interface (&ip) ;
 }
 
-#if 0
 jobject new_netbios_mode (JNIEnv *env, OFC_CONFIG_MODE netBiosMode)
 {
   jobject objNetBIOSMode ;
@@ -1513,7 +1512,6 @@ jobject new_netbios_mode (JNIEnv *env, OFC_CONFIG_MODE netBiosMode)
 
   return (objNetBIOSMode) ;
 }
-#endif
 	  
 jobject new_inet_address (JNIEnv *env, OFC_IPADDR *ip)
 {
@@ -1570,9 +1568,7 @@ jobject new_interface (JNIEnv *env, jobject objFramework,
 {
   jobjectArray arrayWins ;
   jstring jstrLmb ;
-#if 0
   jobject objNetBiosMode ;
-#endif
   jobject objBcastAddress ;
   jobject objMaskAddress ;
   jobject objInetAddress ;
@@ -1581,9 +1577,7 @@ jobject new_interface (JNIEnv *env, jobject objFramework,
   jmethodID midNewInterface ;
   jclass clsBlueFramework ;
 
-#if 0
   objNetBiosMode = new_netbios_mode (env, iface->netBiosMode) ;
-#endif
   objInetAddress = new_inet_address (env, &iface->ip) ;
   objBcastAddress = new_inet_address (env, &iface->bcast) ;
   objMaskAddress = new_inet_address (env, &iface->mask) ;
@@ -1661,124 +1655,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_Framework_getInterfaces
   return (jinterfaces) ;
 }
 
-#if 0
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setAuthenticationMode
- * Signature: (Lcom/connectedway/io/Framework$authenticationMode;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setAuthenticationMode
-  (JNIEnv *env, jobject objFramework, jobject objAuthenticationMode)
-{
-  OFC_CONFIG_AUTH_MODE authMode ;
-
-  authMode = authentication_get_mode (env, objAuthenticationMode) ;
-  ofc_framework_set_authentication_mode(authMode) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getAuthenticationMode
- * Signature: ()I
- */
-JNIEXPORT jobject JNICALL 
-Java_com_connectedway_io_Framework_getAuthenticationMode
-  (JNIEnv *env, jobject objFramework)
-{
-  jobject objAuthenticationMode ;
-
-  OFC_CONFIG_AUTH_MODE mode ;
-
-  ofc_persist_auth_mode(&mode) ;
-
-  objAuthenticationMode = new_authentication_mode (env, mode) ;
-
-  return (objAuthenticationMode) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    addExport
- * Signature: (Lcom/connectedway/io/Framework$Export;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addExport
-  (JNIEnv *env, jobject objFramework, jobject objExport)
-{
-  OFC_FRAMEWORK_EXPORT export ;
-
-  export.exportType = export_get_export_type (env, objExport) ;
-  export.share = export_get_share (env, objExport) ;
-  export.path = export_get_path (env, objExport) ;
-  export.description = export_get_description (env, objExport) ;
-  export.native_fs = export_get_native_fs (env, objExport) ;
-
-  ofc_framework_add_export(&export) ;
-  /*
-   * Clean up what we allocated
-   */
-  export_free_share (export.share) ;
-  export_free_path (export.path) ;
-  export_free_description (export.description) ;
-  export_free_native_fs (export.native_fs) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    addProxyGateway
- * Signature: (Lcom/connectedway/io/Framework$Export;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addProxyGateway
-  (JNIEnv *env, jobject objFramework, jobject objProxy)
-{
-  OFC_FRAMEWORK_PROXY proxy ;
-
-  proxy.path = proxy_gateway_get_path (env, objProxy) ;
-
-  ofc_framework_add_proxy_gateway(&proxy) ;
-  /*
-   * Clean up what we allocated
-   */
-  proxy_gateway_free_path (proxy.path) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getExports
- * Signature: ()[Lcom/connectedway/io/Framework$Export;
- */
-JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_Framework_getExports
-  (JNIEnv *env, jobject objFramework)
-{
-  OFC_FRAMEWORK_EXPORTS *exports ;
-  jobjectArray jexports ;
-
-  jexports = OFC_NULL ;
-  exports = ofc_framework_get_exports() ;
-  if (exports != OFC_NULL)
-    {
-      jexports = new_exports (env, objFramework, exports) ;
-    }
-
-  ofc_framework_free_exports(exports) ;
-  return (jexports) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    removeExport
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_removeExport
-  (JNIEnv *env, jobject objFramework, jstring jstrExport)
-{
-  OFC_LPTSTR tstrShare ;
-
-  tstrShare = jstr2tchar (env, jstrExport) ;
-
-  ofc_framework_remove_export(tstrShare) ;
-  ofc_free (tstrShare) ;
-}
-#endif
 
 /*
  * Class:     com_connectedway_io_Framework
@@ -1839,195 +1715,6 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_removeMap
   ofc_free (tstrPrefix) ;
 }
 
-#if 0
-jobject new_remote (JNIEnv *env, jobject objFramework,
-		   OFC_FRAMEWORK_REMOTE *remote)
-{
-  jstring jstrName ;
-  jstring jstrIp ;
-  jint jiPort ;
-  jobject objRemote ;
-
-  jmethodID midNewRemote ;
-
-  jclass clsBlueFramework ;
-
-  jstrIp = tchar2jstr (env, remote->ip) ;
-  jstrName = tchar2jstr (env, remote->name) ;
-  jiPort = remote->port ;
-
-  clsBlueFramework = (*env)->FindClass
-    (env, "com/connectedway/io/Framework") ;
-
-  midNewRemote = (*env)->GetMethodID 
-    (env, clsBlueFramework, "newRemote",
-     "(Ljava/lang/String;Ljava/lang/String;I)Lcom/connectedway/io/Framework$Remote;") ;
-
-  (*env)->DeleteLocalRef (env, clsBlueFramework) ;
-
-  objRemote = (*env)->CallObjectMethod (env, objFramework, 
-					midNewRemote, jstrName, 
-					jstrIp, jiPort) ;
-  (*env)->DeleteLocalRef (env, jstrName) ;
-  (*env)->DeleteLocalRef (env, jstrIp) ;
-
-  return (objRemote) ;
-}
-
-jobjectArray new_remotes (JNIEnv *env, 
-			 jobject objFramework,
-			 OFC_FRAMEWORK_REMOTES *remotes)
-{
-  jobjectArray jremotes ;
-  jobject objRemote ;
-  int i ;
-  jclass clsRemote ;
-
-  clsRemote = (*env)->FindClass
-    (env, "com/connectedway/io/Framework$Remote") ;
-
-  jremotes = 
-    (*env)->NewObjectArray (env, remotes->numRemotes, clsRemote, NULL) ;
-  (*env)->DeleteLocalRef (env, clsRemote) ;  
-
-  for (i = 0 ; i < remotes->numRemotes ; i++)
-    {
-      objRemote = new_remote (env, objFramework, &remotes->remote[i]) ;
-      (*env)->SetObjectArrayElement (env, jremotes, i, objRemote) ;
-    }
-
-  return (jremotes) ;
-}
-
-OFC_LPTSTR remote_get_name (JNIEnv *env, jobject objRemote)
-{
-  jmethodID midGetName ;
-
-  jstring jstrName ;
-  OFC_LPTSTR tstrName ;
-  jclass clsRemote ;
-
-  clsRemote = (*env)->FindClass
-    (env, "com/connectedway/io/Framework$Remote") ;
-  midGetName = (*env)->GetMethodID(env, clsRemote, "getName", 
-				   "()Ljava/lang/String;") ;
-  (*env)->DeleteLocalRef (env, clsRemote) ;
-  jstrName = (*env)->CallObjectMethod(env, objRemote, midGetName) ;
-
-  tstrName = OFC_NULL ;
-  if (jstrName != NULL)
-    {
-      tstrName = jstr2tchar (env, jstrName) ;
-      (*env)->DeleteLocalRef (env, jstrName) ;
-    }
-
-  return (tstrName) ;
-}
-
-OFC_LPTSTR remote_get_ip (JNIEnv *env, jobject objRemote)
-{
-  jmethodID midGetIP ;
-  jstring jstrIp ;
-  OFC_LPTSTR tstrIp ;
-  jclass clsRemote ;
-
-  clsRemote = (*env)->FindClass
-    (env, "com/connectedway/io/Framework$Remote") ;
-  midGetIP = (*env)->GetMethodID(env, clsRemote, "getIP", 
-				 "()Ljava/lang/String;") ;
-  (*env)->DeleteLocalRef (env, clsRemote) ;
-
-  jstrIp = (*env)->CallObjectMethod(env, objRemote, midGetIP) ;
-
-  tstrIp = OFC_NULL ;
-  if (jstrIp != NULL)
-    {
-      tstrIp = jstr2tchar (env, jstrIp) ;
-      (*env)->DeleteLocalRef (env, jstrIp) ;
-    }
-
-  return (tstrIp) ;
-}
-
-OFC_UINT16 remote_get_port (JNIEnv *env, jobject objRemote)
-{
-  jmethodID midGetPort ;
-  jint jiPort ;
-  jclass clsRemote ;
-
-  clsRemote = (*env)->FindClass
-    (env, "com/connectedway/io/Framework$Remote") ;
-  midGetPort = (*env)->GetMethodID(env, clsRemote, "getPort", 
-				   "()I") ;
-  (*env)->DeleteLocalRef (env, clsRemote) ;
-
-  jiPort = (*env)->CallIntMethod(env, objRemote, midGetPort) ;
-
-  return ((OFC_UINT16) jiPort) ;
-}
-
-static OFC_VOID remote_free_remote (OFC_FRAMEWORK_REMOTE *remote)
-{
-  ofc_free (remote->name) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    addRemote
- * Signature: (Lcom/connectedway/io/Framework$Remote;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addRemote
-  (JNIEnv *env, jobject objFramework, jobject objRemote)
-{
-  OFC_FRAMEWORK_REMOTE remote ;
-
-  remote.name = remote_get_name (env, objRemote) ;
-  remote.ip = remote_get_ip (env, objRemote) ;
-  remote.port = remote_get_port (env, objRemote) ;
-
-  ofc_framework_add_remote(&remote) ;
-
-  remote_free_remote (&remote) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getRemotes
- * Signature: ()[Lcom/connectedway/io/Framework$Remote;
- */
-JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_Framework_getRemotes
-  (JNIEnv *env, jobject objFramework)
-{
-  OFC_FRAMEWORK_REMOTES *remotes ;
-  jobjectArray jremotes ;
-
-  jremotes = OFC_NULL ;
-  remotes = ofc_framework_get_remotes() ;
-  if (remotes != OFC_NULL)
-    {
-      jremotes = new_remotes (env, objFramework, remotes) ;
-      ofc_framework_free_remotes(remotes) ;
-    }
-  return (jremotes) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    removeRemote
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_removeRemote
-  (JNIEnv *env, jobject objFramework, jstring name)
-{
-  OFC_LPTSTR tstrName ;
-
-  tstrName = jstr2tchar (env, name) ;
-
-  ofc_framework_remove_remote(tstrName) ;
-  ofc_free (tstrName) ;
-
-}
-#endif
 
 /*
  * Class:     com_connectedway_io_Framework
@@ -2040,65 +1727,6 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_update
   ofc_framework_update() ;
 }
 
-#if 0
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getServerEnabled
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_com_connectedway_io_Framework_getServerEnabled
-  (JNIEnv *env, jobject objFramework)
-{
-  OFC_BOOL on ;
-  jboolean jon ;
-
-  on = ofc_framework_get_server_enabled() ;
-  jon = JNI_FALSE ;
-  if (on == OFC_TRUE)
-    jon = JNI_TRUE ;
-  return (jon) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getServerUsername
- * Signature: ()Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_connectedway_io_Framework_getServerUsername
-  (JNIEnv *env, jobject objFramework)
-{
-  jstring jstrUsername ;
-  OFC_LPTSTR tstrUsername ;
-
-  tstrUsername = ofc_framework_get_server_username () ;
-
-  jstrUsername = tchar2jstr (env, tstrUsername) ;
-
-  ofc_free (tstrUsername) ;
-  
-  return (jstrUsername) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getServerPassword
- * Signature: ()Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_connectedway_io_Framework_getServerPassword
-  (JNIEnv *env, jobject objFramework)
-{
-  jstring jstrPassword ;
-  OFC_LPTSTR tstrPassword ;
-
-  tstrPassword = ofc_framework_get_server_password () ;
-
-  jstrPassword = tchar2jstr (env, tstrPassword) ;
-
-  ofc_free (tstrPassword) ;
-  
-  return (jstrPassword) ;
-}
-#endif
 
 static jmethodID g_method = 0 ;
 static jobject g_interface = OFC_NULL ;
@@ -2137,146 +1765,6 @@ static JNIEnv *get_env()
   return (env) ;
 }
 
-#if 0
-jobject new_server_event (JNIEnv *env, int event)
-{
-  jobject objServerEvent ;
-  jstring jstrServerEvent ;
-  const char *szServerEvent ;
-
-  switch (event)
-    {
-    default:
-    case SERVER_EVENT_INFO:
-      szServerEvent = "INFO" ;
-      break ;
-
-    case SERVER_EVENT_ERROR:
-      szServerEvent = "ERROR" ;
-      break ;
-
-    case SERVER_EVENT_SECURITY:
-      szServerEvent = "SECURITY" ;
-      break ;
-    }
-
-  jstrServerEvent = (*env)->NewStringUTF (env, szServerEvent) ;
-
-  objServerEvent = (*env)->CallStaticObjectMethod(env, g_serverevent,
-						  g_midvalueof, 
-						  jstrServerEvent) ;
-  (*env)->DeleteLocalRef (env, jstrServerEvent) ;
-
-  return (objServerEvent) ;
-}
-	  
-void call_on_server_event (int event, OFC_CCHAR * message)
-{
-  jstring jstr ;
-  JNIEnv *env ;
-  jobject objServerEvent ;
-
-  env = get_env() ;
-  if (env != OFC_NULL)
-    {
-      objServerEvent = new_server_event (env, event) ;
-      jstr = (*env)->NewStringUTF (env, message) ;
-      (*env)->CallVoidMethod (env, g_interface, g_method, objServerEvent, jstr) ;
-      (*env)->DeleteLocalRef (env, jstr) ;
-      (*env)->DeleteLocalRef (env, objServerEvent) ;
-    }
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setServerListener
- * Signature: (Lcom/connectedway/io/Framework$ServerListener;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setServerListener
-  (JNIEnv *env, jobject objFramework, jobject serverListener)
-{
-  jclass clsListener ;
-  jclass clsServerEvent ;
-
-  (*env)->GetJavaVM(env, &g_jvm) ;
-
-  clsListener = (*env)->GetObjectClass (env, serverListener) ;
-  g_interface = 
-    (*env)->NewGlobalRef(env, serverListener) ;
-
-
-  g_method = (*env)->GetMethodID(env, clsListener, 
-				 "onServerEvent", 
-				 "(Lcom/connectedway/io/Framework$serverEvent;Ljava/lang/String;)V");
-
-  clsServerEvent = (*env)->FindClass
-    (env, "com/connectedway/io/Framework$serverEvent") ;
-  g_serverevent = 
-    (*env)->NewGlobalRef(env, clsServerEvent) ;
-  g_midvalueof = (*env)->GetStaticMethodID
-    (env, g_serverevent, "valueOf",
-     "(Ljava/lang/String;)Lcom/connectedway/io/Framework$serverEvent;") ;
-
-  (*env)->DeleteLocalRef(env, clsListener) ;
-  (*env)->DeleteLocalRef(env, clsServerEvent) ;
-#if 0
-  /*
-   * Later if we ever deregister
-   */
-  (*env)->DeleteGlobalRef(env, g_interface) ;
-  (*env)->DeleteGlobalRef(env, g_serverevent) ;
-#endif
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setServerEnabled
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setServerEnabled
-  (JNIEnv *env, jobject objFramework, jboolean jon)
-{
-  OFC_BOOL on ;
-
-  on = OFC_FALSE ;
-  if (jon)
-    on = OFC_TRUE ;
-  ofc_framework_set_server_enabled(on) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setServerUsername
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setServerUsername
-  (JNIEnv *env, jobject objFramework, jstring name)
-{
-  OFC_LPTSTR tstrName ;
-
-  tstrName = jstr2tchar (env, name) ;
-
-  ofc_framework_set_server_username(tstrName) ;
-  ofc_free (tstrName) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setServerPassword
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setServerPassword
-  (JNIEnv *env, jobject objFramework, jstring pass)
-{
-  OFC_LPTSTR tstrPass ;
-
-  tstrPass = jstr2tchar (env, pass) ;
-
-  ofc_framework_set_server_password(tstrPass) ;
-  ofc_free (tstrPass) ;
-}
-#endif
-
 /*
  * Class:     com_connectedway_io_Framework
  * Method:    println
@@ -2294,51 +1782,6 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_println
 
 }
 
-#if 0
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getMaxEvents
- * Signature: ()I
- */
-JNIEXPORT int JNICALL Java_com_connectedway_io_Framework_getMaxEvents
-  (JNIEnv *env, jobject objFramework)
-{
-  return (ofc_framework_get_max_events()) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    getTimePeriod
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_com_connectedway_io_Framework_getTimePeriod
-  (JNIEnv *env, jobject objFramework)
-{
-  return ((jlong) ofc_framework_get_time_period()) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setMaxEvents
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setMaxEvents
-  (JNIEnv *env, jobject objFramework, int maxEvents)
-{
-  ofc_framework_set_max_events(maxEvents) ;
-}
-
-/*
- * Class:     com_connectedway_io_Framework
- * Method:    setTimePeriod
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setTimePeriod
-  (JNIEnv *env, jobject objFramework, long timePeriod)
-{
-  ofc_framework_set_time_period(timePeriod) ;
-}
-#endif
 
 JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setInterfaceFilter
 (JNIEnv *env, jobject objFramework, jint ip)
