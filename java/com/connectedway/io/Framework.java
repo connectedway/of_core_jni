@@ -223,22 +223,28 @@ public class Framework implements Serializable
 	 * File System Type
 	 */
 	private mapType _mapType ;
-
+	/**
+	 * Thumbnail Mode (whether to display thumbnails)
+	 */
+	private Boolean _thumbnail_mode ;
 	/**
 	 * Constructor
 	 */
-	public Map (String _name, String _desc, File _path, mapType _type) {
+	public Map (String _name, String _desc, File _path, mapType _type,
+		    boolean _thumbnail_mode) {
 	    this._name = _name ;
 	    this._desc = _desc ;
 	    this._path = _path ;
 	    this._mapType = _type ;
+	    this._thumbnail_mode = Boolean.valueOf(_thumbnail_mode) ;
 	}
 
 	/**
 	 * Copy Constructor
 	 */
 	public Map (Map amap) {
-	    this(amap._name, amap._desc, amap._path, amap._mapType) ;
+	    this(amap._name, amap._desc, amap._path, amap._mapType,
+		 amap._thumbnail_mode) ;
 	}
 
 	public String getName() {
@@ -256,53 +262,10 @@ public class Framework implements Serializable
 	public String getDescription() {
 	    return _desc ;
 	}
-
-    }
-
-    /**
-     * Remote Node
-     */
-    public class Remote implements Serializable {
-
-	/**
-	 * The name of the Remote
-	 */
-	private String _name ;
-	/**
-	 * The IP Address of the remote
-	 */
-	private String _ip ;
-	/**
-	 * The port
-	 */
-	int _port ;
-	/**
-	 * Constructor
-	 */
-	public Remote (String _name, String _ip, int _port) {
-	    this._name = _name ;
-	    this._ip = _ip ;
-	    this._port = _port ;
+	public boolean getThumbnailMode() {
+	    return Boolean.TRUE.equals(_thumbnail_mode) ;
 	}
 
-	/**
-	 * Copy Constructor
-	 */
-	public Remote (Remote aremote) {
-	    this(aremote._name, aremote._ip, aremote._port) ;
-	}
-
-	public String getName() {
-	    return _name ;
-	}
-	
-	public String getIP() {
-	    return _ip ;
-	}
-
-	public int getPort() {
-	    return _port ;
-	}
     }
 
     /**
@@ -368,6 +331,10 @@ public class Framework implements Serializable
      * Get the UUID of the node
      */
     public native UUID getUUID () ;
+    /**
+     * Get the Rood Directory for the server
+     */
+    public native String getRootDir() ;
     /**
      * Enable or Disable auto interface discovery.  When auto discovery
      * is enabled, the Blue Share stack will query the underlying platform
@@ -436,8 +403,9 @@ public class Framework implements Serializable
      */
     public native void removeExport (String share) ;
 
-    public Map newMap (String _name, String _desc, File _path, mapType _type) {
-	return new Map (_name, _desc, _path, _type) ;
+    public Map newMap (String _name, String _desc, File _path, mapType _type,
+		       boolean thumbnail) {
+	return new Map (_name, _desc, _path, _type, thumbnail) ;
     }
     /**
      * Add a prefix mapping
@@ -452,22 +420,6 @@ public class Framework implements Serializable
      */
     public native void removeMap (String name) ;
 
-    public Remote newRemote (String _name, String _ip, int _port) {
-	return new Remote (_name, _ip, _port) ;
-    }
-    /**
-     * Add a Remote
-     */
-    public native void addRemote (Remote remote) ;
-    /**
-     * Get a list of remotes
-     */
-    public native Remote[] getRemotes () ;
-    /**
-     * Remove a prefix map
-     */
-    public native void removeRemote (String name) ;
-
     /**
      * Notify the Blue Share components that a configuration change has been
      * made.  If multiple configuration changes are being made at one time,
@@ -477,6 +429,8 @@ public class Framework implements Serializable
     public native void update () ;
 
     public native void println(String output);
+
+    public native void setInterfaceFilter (int ip) ;
 
     static {
 	System.loadLibrary("of_core_jni") ;

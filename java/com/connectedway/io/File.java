@@ -922,4 +922,7 @@ public class File extends java.io.File {
 	    return fs.getLastError() ;
 	}
 
+        public static String getLastErrorString() {
+	    return fs.getLastErrorString() ;
+	}
 }

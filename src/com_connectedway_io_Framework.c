@@ -98,7 +98,10 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_init
   ofc_framework_init() ;
 
 #if defined(__ANDROID__) || defined(ANDROID)
+  /* TBD: Fix get_library_addresses on latest android */
+#if 0
   ofc_printf ("libanddroidsmb loaded at 0x%08x\n", get_library_address()) ;
+#endif
 #endif
 }
 
@@ -1781,7 +1784,6 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_println
   ofc_free (tstrout) ;
 
 }
-
 
 JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setInterfaceFilter
 (JNIEnv *env, jobject objFramework, jint ip)

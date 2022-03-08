@@ -2,7 +2,9 @@ package com.connectedway.io;
 
 import java.io.IOException ;
 import com.connectedway.io.Framework ;
+import com.connectedway.io.File ;
 
+import com.connectedway.nio.directory.Directory ;
 import java.io.FileNotFoundException ;
 import java.lang.SecurityException ;
 
@@ -382,4 +384,7 @@ public class FileSystem {
     public native long seek (FileDescriptor fd, int mode, long pos) 
 	throws IOException ;
     public native long getLastError () ;
+    public native String getLastErrorString () ;
+    public native File findFile(Directory dir) throws SecurityException, FileNotFoundException ;
+    public native void findClose(Directory dir);
 }

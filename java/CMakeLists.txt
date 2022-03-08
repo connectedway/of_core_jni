@@ -13,5 +13,7 @@ add_jar(JavaOpenFiles
 	com/connectedway/io/Framework.java
 	com/connectedway/io/RandomAccessFile.java
 	com/connectedway/io/File.java
+	com/connectedway/nio/directory/Directory.java
+	com/connectedway/nio/directory/FileDirectoryStream.java
 	)
 
