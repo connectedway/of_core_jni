@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) 2018 Connected Way
+ * All rights reserved.
+ *
+ * This software is protected by copyright and intellectual 
+ * property laws as well as international treaties.  It is to be 
+ * used and copied only by authorized licensees under the 
+ * conditions described in their licenses.  
+ *
+ * Title to and ownership of the software shall at all times 
+ * remain with Blue Peach Solutions.
+ */
+
 package com.connectedway.io ;
 
 import java.io.* ;

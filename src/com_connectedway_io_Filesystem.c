@@ -1266,25 +1266,25 @@ JNIEXPORT jobject JNICALL Java_com_connectedway_io_FileSystem_open
   if (iMode == com_connectedway_io_FileSystem_OPEN_READ)
     {
       dwAccess = OFC_GENERIC_READ ;
-      dwShare = OFC_FILE_SHARE_READ ;
+      dwShare = OFC_FILE_SHARE_READ | OFC_FILE_SHARE_WRITE ;
       dwCreate = OFC_OPEN_EXISTING ;
     }
   else if (iMode == com_connectedway_io_FileSystem_OPEN_WRITE)
     {
       dwAccess = OFC_GENERIC_WRITE ;
-      dwShare = OFC_FILE_SHARE_NONE ;
+      dwShare = OFC_FILE_SHARE_READ | OFC_FILE_SHARE_WRITE ;
       dwCreate = OFC_CREATE_ALWAYS ;
     }
   else if (iMode == com_connectedway_io_FileSystem_OPEN_APPEND)
     {
       dwAccess = OFC_GENERIC_WRITE ;
-      dwShare = OFC_FILE_SHARE_READ ;
+      dwShare = OFC_FILE_SHARE_READ | OFC_FILE_SHARE_WRITE ;
       dwCreate = OFC_OPEN_ALWAYS ;
     }
   else if (iMode == com_connectedway_io_FileSystem_OPEN_RW)
     {
       dwAccess = OFC_GENERIC_READ | OFC_GENERIC_WRITE ;
-      dwShare = OFC_FILE_SHARE_NONE ;
+      dwShare = OFC_FILE_SHARE_READ | OFC_FILE_SHARE_WRITE ;
       dwCreate = OFC_OPEN_ALWAYS ;
     }
 
@@ -1380,7 +1380,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
     {
       lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
-      bsizeBuffer = jiLen ;
+      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
 
       if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
 			OFC_HANDLE_NULL) == OFC_FALSE)
@@ -1459,7 +1459,7 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connected
   for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
     {
       lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
-      bsizeBuffer = jiLen ;
+      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
 
       if (OfcWriteFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nWritten, 
 			 OFC_HANDLE_NULL) == OFC_FALSE)

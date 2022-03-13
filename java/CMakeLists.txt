@@ -4,6 +4,15 @@ project(JavaOpenFiles VERSION 1.0.1 DESCRIPTION "OpenFiles Classes")
 find_package(Java REQUIRED)
 include(UseJava)
 
+if(ANDROID)
+  set(ANDROID_SRCS
+	com/connectedway/nio/directory/Directory.java
+	com/connectedway/nio/directory/FileDirectoryStream.java
+	)
+else()
+  set(ANDROID_SRCS "")
+endif()
+
 add_jar(JavaOpenFiles
 	com/connectedway/io/FileDescriptor.java
 	com/connectedway/io/FileSystem.java
@@ -13,7 +22,6 @@ add_jar(JavaOpenFiles
 	com/connectedway/io/Framework.java
 	com/connectedway/io/RandomAccessFile.java
 	com/connectedway/io/File.java
-	com/connectedway/nio/directory/Directory.java
-	com/connectedway/nio/directory/FileDirectoryStream.java
+	${ANDROID_SRCS}
 	)
 

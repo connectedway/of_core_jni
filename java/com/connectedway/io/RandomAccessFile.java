@@ -34,10 +34,15 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 
 	int imode ;
 
-	if (mode.equals("r"))
-	    imode = FileSystem.OPEN_READ ;
-	else
-	    imode = FileSystem.OPEN_RW ;
+	if (mode.indexOf('r') != -1) {
+	    if (mode.indexOf('w') != -1) {
+		imode = FileSystem.OPEN_RW;
+	    } else {
+		imode = FileSystem.OPEN_READ;
+	    }
+	} else {
+	    imode = FileSystem.OPEN_WRITE;
+	}
 
 	fd = fs.open (name, imode) ;
     }

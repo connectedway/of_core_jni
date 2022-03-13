@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(of_core_jni VERSION 1.0.1 DESCRIPTION "OpenFiles JNI")
 
-set(JAVA_AWT_LIBRARY c)
-set(JAVA_JVM_LIBRARY c)
-set(JAVA_INCLUDE_PATH2 c)
-set(JAVA_AWT_INCLUDE_PATH c)
-# set(ENV{JAVA_HOME} /Library/Java/JavaVirtualMachines/openlogic-openjdk-11.jdk/Contents/Home)
+if (APPLE)
+  set(ENV{JAVA_HOME} /Library/Java/JavaVirtualMachines/openlogic-openjdk-11.jdk/Contents/Home)
+else()
+  set(JAVA_AWT_LIBRARY c)
+  set(JAVA_JVM_LIBRARY c)
+  set(JAVA_INCLUDE_PATH2 c)
+  set(JAVA_AWT_INCLUDE_PATH c)
+endif()
+
 find_package(JNI REQUIRED)
 
 if (JNI_FOUND)
@@ -34,6 +38,5 @@ set_target_properties(of_core_jni PROPERTIES SOVERSION 1)
 target_link_libraries(of_core_jni PRIVATE of_core_static ${JNI_LIBRARIES})
 
 add_subdirectory(java)
-
 
 add_subdirectory(test)
