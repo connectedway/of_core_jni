@@ -1662,12 +1662,15 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_Framework_getInterfaces
 /*
  * Class:     com_connectedway_io_Framework
  * Method:    addMap
- * Signature: (Lcom/connectedway/io/Framework$Map;)V
+ * Signature: (Lcom/connectedway/io/Framework$Map;)Z
   */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addMap
+JNIEXPORT jboolean JNICALL Java_com_connectedway_io_Framework_addMap
   (JNIEnv *env, jobject objFramework, jobject objMap)
 {
   OFC_FRAMEWORK_MAP map ;
+  jboolean jret ;
+
+  jret = JNI_FALSE ;
  
   map.prefix = map_get_name (env, objMap) ;
   map.path = map_get_path (env, objMap) ;
@@ -1675,9 +1678,11 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addMap
   map.desc = map_get_desc (env, objMap) ;
   map.thumbnail = map_get_thumbnail (env, objMap) ;
  
-  ofc_framework_add_map(&map) ;
+  if (ofc_framework_add_map(&map) == OFC_TRUE)
+    jret = JNI_TRUE;
  
   map_free_map (&map) ;
+  return (jret);
 }
  
 /*

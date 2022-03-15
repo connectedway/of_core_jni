@@ -186,9 +186,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_Framework_getMyAddresses
 /*
  * Class:     com_connectedway_io_Framework
  * Method:    addMap
- * Signature: (Lcom/connectedway/io/Framework/Map;)V
+ * Signature: (Lcom/connectedway/io/Framework/Map;)Z
  */
-JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_addMap
+JNIEXPORT jboolean JNICALL Java_com_connectedway_io_Framework_addMap
   (JNIEnv *, jobject, jobject);
 
 /*
