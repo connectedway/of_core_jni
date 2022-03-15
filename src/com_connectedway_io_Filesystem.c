@@ -659,6 +659,7 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_delete
 {
   OFC_LPTSTR tstrPath ;
   OFC_BOOL retDelete ;
+  OFC_DWORD dwLastError;
   jboolean ret ;
   jint booleanAttributes ;
 
@@ -672,7 +673,41 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_delete
   booleanAttributes = get_boolean_attributes (tstrPath) ;
 
   if (booleanAttributes & com_connectedway_io_FileSystem_BA_DIRECTORY)
-    retDelete = OfcRemoveDirectoryW (tstrPath) ;
+    {
+      OFC_HANDLE dirHandle;
+      retDelete = OfcRemoveDirectoryW (tstrPath) ;
+
+      dirHandle = OfcCreateFile (tstrPath,
+				 OFC_FILE_DELETE,
+				 OFC_FILE_SHARE_DELETE,
+				 OFC_NULL,
+				 OFC_OPEN_EXISTING,
+				 OFC_FILE_FLAG_DELETE_ON_CLOSE |
+				 OFC_FILE_ATTRIBUTE_DIRECTORY,
+				 OFC_HANDLE_NULL) ;
+        
+      if (dirHandle == OFC_INVALID_HANDLE_VALUE)
+	{
+	  ofc_printf("Failed to create delete on close dir %A, "
+		     "Error Code %d\n",
+		     tstrPath,
+		     OfcGetLastError ()) ;
+	  retDelete = OFC_FALSE ;
+	}
+      else
+	{
+	  /* Close file
+	   */
+	  retDelete = OfcCloseHandle (dirHandle) ;
+	  if (retDelete != OFC_TRUE)
+	    {
+	      dwLastError = OfcGetLastError () ;
+	      ofc_printf ("Close of Delete on close dir "
+			  "Failed with Error %d\n",
+			  dwLastError) ;
+	    }
+	}
+    }
   else
     retDelete = OfcDeleteFileW (tstrPath) ;
 
@@ -1261,7 +1296,7 @@ JNIEXPORT jobject JNICALL Java_com_connectedway_io_FileSystem_open
 	       tstrPathName) ;
 #endif
   dwAccess = OFC_GENERIC_READ ;
-  dwShare = OFC_FILE_SHARE_READ ;
+  dwShare = OFC_FILE_SHARE_READ | OFC_FILE_SHARE_WRITE ;
   dwCreate = OFC_OPEN_EXISTING ;
   if (iMode == com_connectedway_io_FileSystem_OPEN_READ)
     {
