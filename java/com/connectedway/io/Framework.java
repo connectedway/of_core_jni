@@ -410,7 +410,7 @@ public class Framework implements Serializable
     /**
      * Add a prefix mapping
      */
-    public native void addMap (Map map) ;
+    public native boolean addMap (Map map) ;
     /**
      * Get a list of prefix mappings
      */

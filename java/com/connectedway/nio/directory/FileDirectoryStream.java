@@ -10,9 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.lang.InterruptedException;
 
-import android.net.Uri;
-import android.content.Context;
-import android.os.SystemClock;
+import java.lang.System;
 
 import com.connectedway.io.File;
 import com.connectedway.nio.directory.Directory;
@@ -43,7 +41,7 @@ public class FileDirectoryStream {
 	this.dir = new Directory (startDirectory) ;
 
 	this.listener = listener ;
-	this.expiration = SystemClock.elapsedRealtime() + 60000 ;
+	this.expiration = System.currentTimeMillis() + 60000 ;
 	state = State.LOADING ;
 	//
 	// startFileSearch spawns a thread that will build up the 
@@ -55,11 +53,11 @@ public class FileDirectoryStream {
 
     public boolean expired() {
 
-	return SystemClock.elapsedRealtime() > expiration ;
+	return System.currentTimeMillis() > expiration ;
     }
 
     public void setExpired() {
-	expiration = SystemClock.elapsedRealtime() ;
+	expiration = System.currentTimeMillis() ;
     }
 
     private void startFileSearch(final File startDirectory) {

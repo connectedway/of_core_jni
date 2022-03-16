@@ -94,6 +94,8 @@ public class File extends java.io.File {
         private int attributes ;
         private boolean sizeset ;
         private long size ;
+        private boolean dateset ;
+	private long date ;
 
 	/**
 	 * The FileSystem object representing the platform's local file system.
@@ -112,6 +114,7 @@ public class File extends java.io.File {
 
 		this.attributesset = false ;
 		this.sizeset = false ;
+		this.dateset = false ;
 		if (pathname == null)
 			throw new NullPointerException();
 
@@ -135,6 +138,7 @@ public class File extends java.io.File {
 
 		this.attributesset = false ;
 		this.sizeset = false ;
+		this.dateset = false ;
 		if (child == null)
 			throw new NullPointerException();
 
@@ -157,6 +161,7 @@ public class File extends java.io.File {
 
 		this.attributesset = false ;
 		this.sizeset = false ;
+		this.dateset = false ;
 		if (parent != null) {
 			this.pathname = fs.resolve(parent.getPath(), fs.normalize(child));
 		} else {
@@ -186,6 +191,7 @@ public class File extends java.io.File {
 
 		this.attributesset = false ;
 		this.sizeset = false ;
+		this.dateset = false ;
 		this.pathname = fs.normalize(uri.getPath());
 	}
 
@@ -195,6 +201,8 @@ public class File extends java.io.File {
 		this.attributes = file.attributes ;
 		this.sizeset = file.sizeset ;
 		this.size = file.size ;
+		this.dateset = file.dateset ;
+		this.date = file.date ;
 		this.pathname = file.pathname ;
 	}
 
@@ -209,6 +217,7 @@ public class File extends java.io.File {
 
 		this.attributesset = false ;
 		this.sizeset = false ;
+		this.dateset = false ;
 		this.pathname = fs.normalize(file.getPath());
 	}
 
@@ -549,6 +558,12 @@ public class File extends java.io.File {
 	    this.size = size ;
 	}
 
+	public void setDate(long date) {
+
+	    this.dateset = true ;
+	    this.date = date ;
+	}
+
 	/**
 	 * Returns the time that the file denoted by this abstract pathname was last
 	 * modified.
@@ -556,7 +571,15 @@ public class File extends java.io.File {
 	 * @see java.io.File#lastModified()
 	 */
 	public long lastModified() {
-		return fs.getLastModifiedTime(this);
+	    long date ;
+
+	    if (!this.dateset) {
+		this.date = fs.getLastModifiedTime(this);
+		this.dateset = true ;
+	    }
+
+	    date = this.date ;
+	    return date;
 	}
 
 	/**
@@ -567,12 +590,13 @@ public class File extends java.io.File {
 	public long length() {
 	    long size ;
 
-	    if (this.sizeset)
-		size = this.size ;
-	    else {
-		size = fs.getLength(this);
+	    if (!this.sizeset) {
+		this.size = fs.getLength(this);
 		this.sizeset = true ;
 	    }
+
+	    size = this.size ;
+
 	    return size;
 	}
 
