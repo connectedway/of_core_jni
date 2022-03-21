@@ -430,6 +430,8 @@ public class Framework implements Serializable
 
     public native void println(String output);
 
+    public native void dumpHeap ();
+
     public native void setInterfaceFilter (int ip) ;
 
     static {
