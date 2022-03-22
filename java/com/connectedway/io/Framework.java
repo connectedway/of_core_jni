@@ -432,6 +432,8 @@ public class Framework implements Serializable
 
     public native void dumpHeap ();
 
+    public native void statsHeap();
+
     public native void setInterfaceFilter (int ip) ;
 
     static {

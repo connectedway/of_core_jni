@@ -1801,3 +1801,9 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_dumpHeap
   ofc_framework_dump_heap() ;
 }
   
+JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_statsHeap
+(JNIEnv *env, jobject objFramework)
+{
+  ofc_framework_stats_heap() ;
+}
+  
