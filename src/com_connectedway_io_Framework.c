@@ -1749,10 +1749,10 @@ static JNIEnv *get_env()
   /* ok, ugly but the Java environment on Darwin has a slightly incorrect
    * prototype.  
    */
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__linux__)
   void *envx ;
 #else
-  JNIEnv *envx ;
+  JNIEnv *envx;
 #endif
 
   if (g_jvm != OFC_NULL)
@@ -1760,7 +1760,6 @@ static JNIEnv *get_env()
       status = (*g_jvm)->GetEnv(g_jvm, (void **) &env, JNI_VERSION_1_6);
       if (status < 0) 
 	{
-	  //	  status = (*g_jvm)->AttachCurrentThread (g_jvm, (const struct JNINativeInterface **) &env, NULL);
 	  status = (*g_jvm)->AttachCurrentThread (g_jvm, &envx, NULL);
 	  if (status < 0)
 	    env = OFC_NULL ;
