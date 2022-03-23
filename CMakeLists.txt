@@ -3,7 +3,7 @@ project(of_core_jni VERSION 1.0.1 DESCRIPTION "OpenFiles JNI")
 
 if (APPLE)
   set(ENV{JAVA_HOME} /Library/Java/JavaVirtualMachines/openlogic-openjdk-11.jdk/Contents/Home)
-elif(NOT UNIX)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
   set(JAVA_AWT_LIBRARY c)
   set(JAVA_JVM_LIBRARY c)
   set(JAVA_INCLUDE_PATH2 c)

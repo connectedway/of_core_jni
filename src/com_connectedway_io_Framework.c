@@ -1749,7 +1749,9 @@ static JNIEnv *get_env()
   /* ok, ugly but the Java environment on Darwin has a slightly incorrect
    * prototype.  
    */
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__ANDROID__) || defined(ANDROID)
+  JNIEnv *envx;
+#elif defined(__APPLE__) || defined(__linux__)
   void *envx ;
 #else
   JNIEnv *envx;
