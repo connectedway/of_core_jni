@@ -68,73 +68,6 @@ public class Framework implements Serializable
     }
 
     /**
-     * A export for the CIFS Server
-     */
-    public class Export implements Serializable {
-	public Export (shareType _shareType, String _share, File _path,
-		       String _comment, String _fsName) {
-	    this._shareType = _shareType ;
-	    this._share = _share ;
-	    this._path = _path ;
-	    this._comment = _comment ;
-	    this._fsName = _fsName ;
-	}
-
-	public native void test() ;
-
-	public shareType getShareType() {
-	    return _shareType ;
-	}
-
-	public String getShare() {
-	    return _share ;
-	}
-
-	public File getPath() {
-	    return _path ;
-	}
-
-	public String getComment() {
-	    return _comment ;
-	}
-
-	public String getFsName() {
-	    return _fsName ;
-	}
-	/**
-	 * The type of share to export
-	 */
-	private shareType _shareType ;
-	/**
-	 * The name of the share
-	 */
-	private String _share ;
-	/**
-	 * The destination to export
-	 */
-	private File _path ;
-	/**
-	 * Comment to associate with the export
-	 */
-	private String _comment ;
-	/**
-	 * Type of Filesystem (HPFS, FAT, etc.)
-	 */
-	private String _fsName ;
-    
-    }
-
-    /**
-     * Server Settings
-     */
-    public static native boolean getServerEnabled() ;
-    public static native String getServerUsername() ;
-    public static native String getServerPassword() ;
-    public static native void setServerEnabled(boolean enabled);
-    public static native void setServerUsername(String username);
-    public static native void setServerPassword(String password);
-
-    /**
      * Interface Configuration
      */
     public class Interface {
@@ -377,32 +310,10 @@ public class Framework implements Serializable
      */
     public native authenticationMode getAuthenticationMode() ;
 
-    public Export newExport (shareType _shareType, String _share, 
-			     File _path,
-			     String _comment, String _fsName) {
-	return new Export (_shareType, _share, _path, _comment, _fsName) ;
-    }
-
     public ProxyGateway newProxyGateway (File _path) {
 	return new ProxyGateway (_path) ;
     }
-    /**
-     * Add an export to the Blue Share stack
-     */
-    public native void addExport (Export export) ;
-    /**
-     * Add an export to the Blue Share stack
-     */
     public native void addProxyGateway (ProxyGateway proxy) ;
-    /**
-     * Get a list of all exports
-     */
-    public native Export[] getExports() ;
-    /**
-     * Remove a particular export
-     */
-    public native void removeExport (String share) ;
-
     public Map newMap (String _name, String _desc, File _path, mapType _type,
 		       boolean thumbnail) {
 	return new Map (_name, _desc, _path, _type, thumbnail) ;
