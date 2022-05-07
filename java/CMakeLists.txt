@@ -15,5 +15,6 @@ add_jar(JavaOpenFiles
 	com/connectedway/io/File.java
 	com/connectedway/nio/directory/Directory.java
 	com/connectedway/nio/directory/FileDirectoryStream.java
+	GENERATE_NATIVE_HEADERS JavaOpenFiles-native
 	)
 
