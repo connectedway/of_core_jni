@@ -7,8 +7,6 @@ import java.util.UUID ;
 import java.io.Serializable ;
 import java.net.InetAddress ;
 
-import com.connectedway.io.File ;
-
 /**
  * This class manages the configuration and initialization of the Blue 
  * Share components.
@@ -29,79 +27,56 @@ public class Framework implements Serializable
      * NetBIOS Interface Modes
      */
     public enum netBIOSMode {
-	BMODE, PMODE, MMODE, HMODE ;
-    }
-    /**
-     * Server Authentication Modes
-     */
-    public enum authenticationMode {
-	DISABLED, SERVER, USER ;
+	BMODE, PMODE, MMODE, HMODE
     }
     /**
      * Share Types
      */
     public enum shareType {
-	DISK, PRINTER, PIPE, COMM, DEVICE ;
+	DISK, PRINTER, PIPE, COMM, DEVICE
     }
 
     public enum mapType {
 	WIN32, DARWIN, LINUX, FILEX, NUFILE, ANDROID,
 	    OTHER, SMB, FILE, PIPE, MAILSLOT, ROOT, WORKGROUP,
-	    SERVER, BOOKMARK, UNKNOWN ;
-    }
-
-    /**
-     * A proxy for the CIFS Server
-     */
-    public class ProxyGateway {
-	public ProxyGateway (File _path) {
-	    this._path = _path ;
-	}
-
-	public File getPath() {
-	    return _path ;
-	}
-	/**
-	 * The destination to export
-	 */
-	private File _path ;
+	    SERVER, BOOKMARK, UNKNOWN
     }
 
     /**
      * Interface Configuration
      */
-    public class Interface {
+    public static class Interface {
 	/**
 	 * The NetBIOS Mode
 	 */
-	private netBIOSMode _netBIOSMode ;
+	private final netBIOSMode _netBIOSMode ;
 	/**
 	 * The Interface's IP address
 	 */
-	private InetAddress _ip ;
+	private final InetAddress _ip ;
 	/**
 	 * The broadcast address for the interface
 	 */
-	private InetAddress _bcast ;
+	private final InetAddress _bcast ;
 	/**
 	 * The network mask for the interface
 	 */
-	private InetAddress _mask ;
+	private final InetAddress _mask ;
 	/**
 	 * The name of the local master browser for the interface 
-	 * if no advertising lmbs are found
+	 * if no advertising local master browsers are found
 	 */
-	private String _defaultLmb ;
+	private final String _defaultLmb ;
 	/**
 	 * The list of WINS servers for the interface
 	 */
-	private InetAddress _wins[] ;
+	private final InetAddress[] _wins;
 	/**
 	 * Constructor 
 	 */
 	public Interface (netBIOSMode _netBIOSMode, InetAddress _ip,
-			  InetAddress _bcast, InetAddress _mask,
-			  String _defaultLmb, InetAddress _wins[]) {
+					  InetAddress _bcast, InetAddress _mask,
+					  String _defaultLmb, InetAddress[] _wins) {
 	    this._netBIOSMode = _netBIOSMode ;
 	    this._ip = _ip ;
 	    this._bcast = _bcast ;
@@ -138,28 +113,28 @@ public class Framework implements Serializable
     /**
      * Path prefix map
      */
-    public class Map implements Serializable {
+    public static class Map implements Serializable {
 
 	/**
 	 * The name of the prefix
 	 */
-	private String _name ;
+	private final String _name ;
 	/**
 	 * The description of the map
 	 */
-	private String _desc ;
+	private final String _desc ;
 	/**
 	 * Destination to map the prefix to
 	 */
-	private File _path ;
+	private final File _path ;
 	/**
 	 * File System Type
 	 */
-	private mapType _mapType ;
+	private final mapType _mapType ;
 	/**
 	 * Thumbnail Mode (whether to display thumbnails)
 	 */
-	private Boolean _thumbnail_mode ;
+	private final Boolean _thumbnail_mode ;
 	/**
 	 * Constructor
 	 */
@@ -169,7 +144,7 @@ public class Framework implements Serializable
 	    this._desc = _desc ;
 	    this._path = _path ;
 	    this._mapType = _type ;
-	    this._thumbnail_mode = Boolean.valueOf(_thumbnail_mode) ;
+	    this._thumbnail_mode = _thumbnail_mode;
 	}
 
 	/**
@@ -226,7 +201,7 @@ public class Framework implements Serializable
     public native void init () ;
     /**
      * Startup the Blue Share stack.  This should be done after all
-     * configuration is done during iniitialization.  Updates to the
+     * configuration is done during initialization.  Updates to the
      * configuration can still be done after startup.
      */
     public native void startup() ;
@@ -281,8 +256,8 @@ public class Framework implements Serializable
     public native boolean getInterfaceDiscovery() ;
 
     public Interface newInterface (netBIOSMode _netBIOSMode, InetAddress _ip,
-				   InetAddress _bcast, InetAddress _mask,
-				   String _defaultLmb, InetAddress _wins[]) {
+								   InetAddress _bcast, InetAddress _mask,
+								   String _defaultLmb, InetAddress[] _wins) {
 	return new Interface (_netBIOSMode, _ip, _bcast, _mask,
 			      _defaultLmb, _wins) ;
     }
@@ -300,23 +275,9 @@ public class Framework implements Serializable
      * Get all the interfaces that are currently configured
      */
     public native Interface[] getInterfaces() ;
-    public native InetAddress[] getMyAddresses() ;
-    /**
-     * Set the server's authentication mode
-     */
-    public native void setAuthenticationMode(authenticationMode mode) ;
-    /**
-     * Get the server's authentication mode
-     */
-    public native authenticationMode getAuthenticationMode() ;
-
-    public ProxyGateway newProxyGateway (File _path) {
-	return new ProxyGateway (_path) ;
-    }
-    public native void addProxyGateway (ProxyGateway proxy) ;
     public Map newMap (String _name, String _desc, File _path, mapType _type,
 		       boolean thumbnail) {
-	return new Map (_name, _desc, _path, _type, thumbnail) ;
+	return new Map(_name, _desc, _path, _type, thumbnail);
     }
     /**
      * Add a prefix mapping
