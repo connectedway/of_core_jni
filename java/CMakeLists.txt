@@ -4,6 +4,12 @@ project(JavaOpenFiles VERSION 1.0.1 DESCRIPTION "OpenFiles Classes")
 find_package(Java REQUIRED)
 include(UseJava)
 
+if(ANDROID)
+	set(ANDROID_JSRCS
+            com/connectedway/io/Resolver.java
+	    )
+endif()
+
 add_jar(JavaOpenFiles
 	com/connectedway/io/FileDescriptor.java
 	com/connectedway/io/FileSystem.java

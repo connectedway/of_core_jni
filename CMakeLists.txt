@@ -21,13 +21,22 @@ include_directories(
 	${JNI_INCLUDE_DIRS}
 	${of_core_BINARY_DIR}
         ${of_core_SOURCE_DIR}/include
+	${of_resolver_fs_SOURCE_DIR}/include
 	include
 )
+
+if(ANDROID)
+	unset(ANDROID_SOURCES)
+	set(ANDROID_SOURCES
+	    src/com_connectedway_io_Resolver.c
+	    )
+endif()
 
 set(SRCS
 	src/com_connectedway_io_Filesystem.c
 	src/com_connectedway_io_Framework.c
 	src/com_connectedway_io_Utils.c
+	${ANDROID_SOURCES}
         )
 
 add_library(of_core_jni SHARED ${SRCS})
