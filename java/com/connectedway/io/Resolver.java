@@ -120,14 +120,13 @@ public class Resolver
 	    return(ret);
 	}
 
-	public int pwrite(byte b[], int len, int offset)
+	public int pwrite(ByteBuffer bb, int len, int offset)
 	{
 	    int ret;
 	    
 	    ret = check_open();
 	    
 	    if (ret == 0) {
-		ByteBuffer bb = ByteBuffer.wrap(b, 0, len);
 		try {
 		    ret = this.fcoc.write(bb, offset);
 		} catch (IOException e) {
@@ -156,14 +155,12 @@ public class Resolver
 	    return (ret);
 	}
 
-	public int pread(byte b[], int len, int offset)
+        public int pread(ByteBuffer bb, int len, int offset)
 	{
 	    int ret;
 
 	    ret = check_open();
 	    if (ret == 0) {
-		ByteBuffer bb = ByteBuffer.wrap(b, 0, len);
-
 		try {
 		    ret = this.fcic.read(bb, offset);
 		    if (ret == -1)
@@ -410,11 +407,11 @@ public class Resolver
 	public abstract ResolverFile Open (String FileName, String mode);
 	public abstract int MkDir(String FileName);
 	public abstract int Write(ResolverFile rFile, byte b[], int len);
-	public abstract int PWrite(ResolverFile rFile, byte b[], int len,
+	public abstract int PWrite(ResolverFile rFile, ByteBuffer bb, int len,
 				   int offset);
 	public abstract int Read(ResolverFile rFile, byte b[], int len);
-	public abstract int PRead(ResolverFile rFile, byte b[], int len,
-				  int offset);
+	public abstract int PRead(ResolverFile rFile, ByteBuffer bb, int len,
+                                  int offset);
 	public abstract int Close(ResolverFile rFile);
 	public abstract int Unlink(String FileName);
 	public abstract int RmDir(String FileName);

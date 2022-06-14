@@ -34,11 +34,11 @@
 #define WRITE_FUNC "Write"
 #define WRITE_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;[BI)I"
 #define PWRITE_FUNC "PWrite"
-#define PWRITE_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;[BII)I"
+#define PWRITE_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;Ljava/nio/ByteBuffer;II)I"
 #define READ_FUNC "Read"
 #define READ_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;[BI)I"
 #define PREAD_FUNC "PRead"
-#define PREAD_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;[BII)I"
+#define PREAD_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;Ljava/nio/ByteBuffer;II)I"
 #define CLOSE_FUNC "Close"
 #define CLOSE_SIG "(Lcom/connectedway/io/Resolver$ResolverFile;)I"
 #define UNLINK_FUNC "Unlink"
@@ -115,13 +115,14 @@ static OFC_VOID exceptCheck(JNIEnv *env)
 static OFC_VOID relEnv(JNIEnv *env)
 {
   exceptCheck(env);
-#if 0
+#if 1
   (*g_jvm)->DetachCurrentThread(g_jvm);
 #endif
 }
 
 static JNIEnv *getEnv() 
 {
+#if 0
   static OFC_DWORD local_env = 0;
   
   JNIEnv *env;
@@ -162,6 +163,35 @@ static JNIEnv *getEnv()
       else
 	env = OFC_NULL ;
     }
+#else
+  JNIEnv *env;
+  int status ;
+  /* ok, ugly but the Java environment on Darwin has a slightly incorrect
+   * prototype.  
+   */
+#if defined(__ANDROID__) || defined(ANDROID)
+  JNIEnv *envx;
+#elif defined(__APPLE__) || defined(__linux__)
+  void *envx ;
+#else
+  JNIEnv *envx;
+#endif
+
+  if (g_jvm != OFC_NULL)
+    {
+      status = (*g_jvm)->GetEnv(g_jvm, (void **) &env, JNI_VERSION_1_6);
+      if (status < 0) 
+	{
+	  status = (*g_jvm)->AttachCurrentThread (g_jvm, &envx, NULL);
+	  if (status < 0)
+	    env = OFC_NULL ;
+	  else
+	    env = (JNIEnv *) envx ;
+	}
+    }
+  else
+    env = OFC_NULL ;
+#endif
   return (env) ;
 }
 
@@ -318,7 +348,7 @@ OFC_SIZET resolver_pwrite(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   jobject jFile;
   JNIEnv *env ;
   jint written;
-  jbyteArray baBuffer;
+  jobject bbBuffer;
 
   written = -1;
   
@@ -326,13 +356,10 @@ OFC_SIZET resolver_pwrite(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
-      baBuffer = (*env)->NewByteArray(env, count);
-      (*env)->SetByteArrayRegion(env, baBuffer, 0, count,
-				 (jbyte *) lpBuffer);
-
+      bbBuffer = (*env)->NewDirectByteBuffer(env, lpBuffer, count);
       written = (*env)->CallIntMethod(env, g_resolver,
 				      g_method_pwrite,
-				      jFile, baBuffer,
+				      jFile, bbBuffer,
 				      (jint) count,
 				      (jint) offset);
       
@@ -374,7 +401,7 @@ OFC_SIZET resolver_pread(RESOLVER_FILE *rfile, OFC_LPVOID lpBuffer,
   jobject jFile;
   JNIEnv *env ;
   jint readd;
-  jbyteArray baBuffer;
+  jobject bbBuffer;
 
   readd = -1;
   
@@ -382,15 +409,12 @@ OFC_SIZET resolver_pread(RESOLVER_FILE *rfile, OFC_LPVOID lpBuffer,
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
-      baBuffer = (*env)->NewByteArray(env, count);
+      bbBuffer = (*env)->NewDirectByteBuffer(env, lpBuffer, count);
       readd = (*env)->CallIntMethod(env, g_resolver,
 				    g_method_pread,
-				    jFile, (jbyteArray) baBuffer,
+				    jFile, bbBuffer,
 				    (jint) count,
 				    (jint) offset);
-      (*env)->GetByteArrayRegion(env, baBuffer, 0, readd,
-				 (jbyte *) lpBuffer);
-
       relEnv(env);
     }
   return ((OFC_SIZET) readd);
