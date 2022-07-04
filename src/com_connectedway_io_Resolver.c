@@ -21,6 +21,7 @@
 #include "ofc/thread.h"
 #include "ofc/file.h"
 #include "ofc/fs.h"
+#include "ofc/path.h"
 
 #include "of_resolver_fs/resolver_api.h"
 
@@ -75,6 +76,7 @@ static JavaVM* g_jvm;
 static jclass clsResolverStat;
 static jclass clsResolverStatFS;
 static jclass clsResolverDirent;
+static jfieldID fieldResolverStatId;
 static jfieldID fieldResolverStatSize;
 static jfieldID fieldResolverStatMTime;
 static jfieldID fieldResolverStatFlags;
@@ -210,6 +212,8 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Resolver_setResolverListener
   clsResolverDirent = (*env)->FindClass(env, "com/connectedway/io/Resolver$ResolverDirent");
   clsResolverListener = (*env)->FindClass(env, "com/connectedway/io/Resolver$ResolverListener");
 
+  fieldResolverStatId = (*env)->GetFieldID(env, clsResolverStat,
+                                           "FileId", "J");
   fieldResolverStatSize = (*env)->GetFieldID(env, clsResolverStat,
 					     "Size", "J");
   fieldResolverStatMTime = (*env)->GetFieldID(env, clsResolverStat,
@@ -356,7 +360,7 @@ OFC_SIZET resolver_pwrite(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
-      bbBuffer = (*env)->NewDirectByteBuffer(env, lpBuffer, count);
+      bbBuffer = (*env)->NewDirectByteBuffer(env, (void *) lpBuffer, count);
       written = (*env)->CallIntMethod(env, g_resolver,
 				      g_method_pwrite,
 				      jFile, bbBuffer,
@@ -485,6 +489,8 @@ OFC_INT resolver_stat(OFC_CTCHAR *tName, struct resolver_stat *sb)
   jstring jstrFileName;
   jobject objResolverStat;
   OFC_INT ret;
+  int mode;
+  OFC_PATH *path;
 
   ret = -1;
   env = getEnv();
@@ -499,6 +505,8 @@ OFC_INT resolver_stat(OFC_CTCHAR *tName, struct resolver_stat *sb)
 
       if (objResolverStat != OFC_NULL)
 	{
+          sb->st_ino = (OFC_UINT64) (*env)->GetLongField(env, objResolverStat,
+                                                         fieldResolverStatId);
 	  sb->st_size = (OFC_OFFT) (*env)->GetLongField(env, objResolverStat,
 							fieldResolverStatSize);
 	  sb->st_blocks = (OFC_OFFT) (sb->st_size + 4095) / 4096;
@@ -508,8 +516,19 @@ OFC_INT resolver_stat(OFC_CTCHAR *tName, struct resolver_stat *sb)
 	  sb->st_atime = sb->st_mtime;
 	  sb->st_ctime = sb->st_mtime;
 	  sb->st_nlink = 1;
-	  sb->st_mode = (OFC_INT) (*env)->GetIntField(env, objResolverStat,
-						      fieldResolverStatFlags);
+	  mode = (OFC_INT) (*env)->GetIntField(env, objResolverStat,
+                                               fieldResolverStatFlags);
+          if (mode & 0x01)
+            sb->st_mode = RESOLVER_S_IFDIR;
+          else
+            {
+              path = ofc_path_createW(tName);
+              if (ofc_path_hidden(path))
+                sb->st_mode = RESOLVER_S_IFHID;
+              else
+                sb->st_mode = RESOLVER_S_IFREG;
+            }
+
 	  ret = 0;
 	}
       relEnv(env);
