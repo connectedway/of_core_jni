@@ -114,15 +114,16 @@ static OFC_VOID exceptCheck(JNIEnv *env)
   }
 }
 
-static OFC_VOID relEnv(JNIEnv *env)
+static OFC_VOID relEnv(JNIEnv *env, OFC_BOOL active_attach)
 {
   exceptCheck(env);
 #if 1
-  (*g_jvm)->DetachCurrentThread(g_jvm);
+  if (active_attach)
+    (*g_jvm)->DetachCurrentThread(g_jvm);
 #endif
 }
 
-static JNIEnv *getEnv() 
+static JNIEnv *getEnv(OFC_BOOL *active_attach) 
 {
 #if 0
   static OFC_DWORD local_env = 0;
@@ -179,6 +180,7 @@ static JNIEnv *getEnv()
   JNIEnv *envx;
 #endif
 
+  *active_attach = OFC_FALSE;
   if (g_jvm != OFC_NULL)
     {
       status = (*g_jvm)->GetEnv(g_jvm, (void **) &env, JNI_VERSION_1_6);
@@ -188,7 +190,10 @@ static JNIEnv *getEnv()
 	  if (status < 0)
 	    env = OFC_NULL ;
 	  else
-	    env = (JNIEnv *) envx ;
+            {
+              *active_attach = OFC_TRUE;
+              env = (JNIEnv *) envx ;
+            }
 	}
     }
   else
@@ -281,9 +286,10 @@ RESOLVER_FILE *resolver_open(OFC_CTCHAR *lpFileName, OFC_CCHAR *mode)
   jstring jstrMode;
   jobject rFile;
   jobject gFile;
+  OFC_BOOL active_attach;
 
   gFile = NULL;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jstrFileName = tchar2jstr(env, lpFileName);
@@ -294,7 +300,7 @@ RESOLVER_FILE *resolver_open(OFC_CTCHAR *lpFileName, OFC_CCHAR *mode)
 				       jstrMode);
       exceptCheck(env);
       gFile = (*env)->NewGlobalRef(env, rFile) ;
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (gFile);
 }
@@ -304,8 +310,9 @@ OFC_INT resolver_mkdir(OFC_CTCHAR *lpFileName)
   JNIEnv *env ;
   jstring jstrFileName;
   OFC_INT ret;
+  OFC_BOOL active_attach;
 
-  env = getEnv();
+  env = getEnv(&active_attach);
   ret = -1;
   if (env != OFC_NULL)
     {
@@ -313,7 +320,7 @@ OFC_INT resolver_mkdir(OFC_CTCHAR *lpFileName)
       ret = (*env)->CallIntMethod(env, g_resolver,
 				  g_method_mkdir,
 				  jstrFileName);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return(ret);
 }
@@ -325,10 +332,11 @@ OFC_SIZET resolver_write(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   JNIEnv *env ;
   jint written;
   jbyteArray baBuffer;
+  OFC_BOOL active_attach;
 
   written = -1;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -341,7 +349,7 @@ OFC_SIZET resolver_write(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
 				      jFile, baBuffer,
 				      (jint) count);
       
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return ((OFC_SIZET) written);
 }
@@ -353,10 +361,11 @@ OFC_SIZET resolver_pwrite(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   JNIEnv *env ;
   jint written;
   jobject bbBuffer;
+  OFC_BOOL active_attach;
 
   written = -1;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -367,7 +376,7 @@ OFC_SIZET resolver_pwrite(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
 				      (jint) count,
 				      (jint) offset);
       
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return ((OFC_SIZET) written);
 }
@@ -379,10 +388,11 @@ OFC_SIZET resolver_read(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
   JNIEnv *env ;
   jint readd;
   jbyteArray baBuffer;
+  OFC_BOOL active_attach;
 
   readd = -1;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -394,7 +404,7 @@ OFC_SIZET resolver_read(RESOLVER_FILE *rfile, OFC_LPCVOID lpBuffer,
       (*env)->GetByteArrayRegion(env, baBuffer, 0, readd,
 				 (jbyte *) lpBuffer);
 
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return ((OFC_SIZET) readd);
 }
@@ -406,10 +416,11 @@ OFC_SIZET resolver_pread(RESOLVER_FILE *rfile, OFC_LPVOID lpBuffer,
   JNIEnv *env ;
   jint readd;
   jobject bbBuffer;
+  OFC_BOOL active_attach;
 
   readd = -1;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -419,7 +430,7 @@ OFC_SIZET resolver_pread(RESOLVER_FILE *rfile, OFC_LPVOID lpBuffer,
 				    jFile, bbBuffer,
 				    (jint) count,
 				    (jint) offset);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return ((OFC_SIZET) readd);
 }
@@ -429,8 +440,9 @@ OFC_INT resolver_close(RESOLVER_FILE *rfile)
   jobject jFile;
   JNIEnv *env ;
   int ret;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   ret = -1;
   if (env != OFC_NULL)
     {
@@ -440,7 +452,7 @@ OFC_INT resolver_close(RESOLVER_FILE *rfile)
 				  jFile);
 
       (*env)->DeleteGlobalRef(env, jFile) ;
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -450,16 +462,17 @@ OFC_INT resolver_unlink(OFC_CTCHAR *lpFileName)
   JNIEnv *env ;
   jstring jstrFileName;
   int ret;
+  OFC_BOOL active_attach;
 
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jstrFileName = tchar2jstr(env, lpFileName);
       ret = (*env)->CallIntMethod(env, g_resolver,
 				  g_method_unlink,
 				  jstrFileName);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -469,16 +482,17 @@ OFC_INT resolver_rmdir(OFC_CTCHAR *lpPathName)
   JNIEnv *env ;
   jstring jstrFileName;
   int ret;
+  OFC_BOOL active_attach;
 
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jstrFileName = tchar2jstr(env, lpPathName);
       ret = (*env)->CallIntMethod(env, g_resolver,
 				  g_method_rmdir,
 				  jstrFileName);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -491,9 +505,10 @@ OFC_INT resolver_stat(OFC_CTCHAR *tName, struct resolver_stat *sb)
   OFC_INT ret;
   int mode;
   OFC_PATH *path;
+  OFC_BOOL active_attach;
 
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
 
   if (env != OFC_NULL)
     {
@@ -531,7 +546,7 @@ OFC_INT resolver_stat(OFC_CTCHAR *tName, struct resolver_stat *sb)
 
 	  ret = 0;
 	}
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -542,9 +557,10 @@ OFC_INT resolver_statfs(OFC_CTCHAR *tName, struct resolver_statfs *fsstat)
   jstring jstrFileName;
   jobject objResolverStatFS;
   OFC_INT ret;
+  OFC_BOOL active_attach;
 
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
 
   if (env != OFC_NULL)
     {
@@ -569,7 +585,7 @@ OFC_INT resolver_statfs(OFC_CTCHAR *tName, struct resolver_statfs *fsstat)
 			4096);
 	  ret = 0;
 	}
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -580,9 +596,10 @@ RESOLVER_DIR *resolver_opendir(OFC_CTCHAR *name)
   jstring jstrFileName;
   jobject rDir;
   jobject gDir;
+  OFC_BOOL active_attach;
 
   gDir = OFC_NULL;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jstrFileName = tchar2jstr(env, name);
@@ -600,10 +617,11 @@ struct resolver_dirent *resolver_readdir(RESOLVER_DIR *dirp)
   jobject objResolverDirent;
   static struct resolver_dirent sdirent;
   struct resolver_dirent *ret;
+  OFC_BOOL active_attach;
 
   ret = OFC_NULL;
 
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       objResolverDirent = (*env)->CallObjectMethod(env, g_resolver,
@@ -621,7 +639,7 @@ struct resolver_dirent *resolver_readdir(RESOLVER_DIR *dirp)
 	  ofc_free(tstrName);
 	  ret = &sdirent;
 	}
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return(ret);
 }
@@ -631,9 +649,10 @@ OFC_INT resolver_closedir(RESOLVER_DIR *dirp)
   jobject jDir;
   JNIEnv *env ;
   int ret;
+  OFC_BOOL active_attach;
   
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jDir = (jobject) dirp;
@@ -641,7 +660,7 @@ OFC_INT resolver_closedir(RESOLVER_DIR *dirp)
 				     g_method_closedir,
 				     jDir);
       (*env)->DeleteGlobalRef(env, jDir) ;
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return(ret);
 }
@@ -652,9 +671,10 @@ OFC_INT resolver_rename(OFC_CTCHAR *old, OFC_CTCHAR *new)
   JNIEnv *env ;
   jstring jstrOldName;
   jstring jstrNewName;
+  OFC_BOOL active_attach;
 
   ret = -1;
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jstrOldName = tchar2jstr(env, old);
@@ -664,7 +684,7 @@ OFC_INT resolver_rename(OFC_CTCHAR *old, OFC_CTCHAR *new)
 				  g_method_rename,
 				  jstrOldName,
 				  jstrNewName);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -674,8 +694,9 @@ OFC_INT resolver_flush(RESOLVER_FILE *rfile)
   jobject jFile;
   JNIEnv *env ;
   int ret;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   ret = -1;
   if (env != OFC_NULL)
     {
@@ -683,7 +704,7 @@ OFC_INT resolver_flush(RESOLVER_FILE *rfile)
       ret = (*env)->CallIntMethod(env, g_resolver,
 				  g_method_flush,
 				  jFile);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -695,8 +716,9 @@ OFC_LONG resolver_seek(RESOLVER_FILE *rfile, OFC_INT64 offset, OFC_INT whence)
   OFC_LONG ret;
   jlong joffset;
   jint jwhence;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   ret = -1;
   if (env != OFC_NULL)
     {
@@ -708,7 +730,7 @@ OFC_LONG resolver_seek(RESOLVER_FILE *rfile, OFC_INT64 offset, OFC_INT whence)
 					      g_method_seek,
 					      jFile, joffset, jwhence);
 
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -719,8 +741,9 @@ OFC_INT resolver_truncate(RESOLVER_FILE *rfile, OFC_UINT64 offset)
   JNIEnv *env ;
   OFC_INT ret;
   jlong joffset;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   ret = -1;
   if (env != OFC_NULL)
     {
@@ -730,7 +753,7 @@ OFC_INT resolver_truncate(RESOLVER_FILE *rfile, OFC_UINT64 offset)
 				  g_method_truncate,
 				  jFile, joffset);
 
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
@@ -742,8 +765,9 @@ OFC_VOID resolver_unlock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
   JNIEnv *env ;
   jlong joffset;
   jlong jsize;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -752,7 +776,7 @@ OFC_VOID resolver_unlock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
       (*env)->CallIntMethod(env, g_resolver,
 			    g_method_unlock,
 			    jFile, joffset, jsize);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
 }
 
@@ -764,8 +788,9 @@ OFC_VOID resolver_lock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
   jboolean jshared;
   jlong joffset;
   jlong jsize;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -775,7 +800,7 @@ OFC_VOID resolver_lock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
       (*env)->CallIntMethod(env, g_resolver,
 			    g_method_lock,
 			    jFile, joffset, jsize, jshared);
-      relEnv(env);
+      relEnv(env, active_attach);
     }
 }
 
@@ -788,8 +813,9 @@ OFC_INT resolver_trylock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
   jlong joffset;
   jlong jsize;
   OFC_INT ret = -1;
+  OFC_BOOL active_attach;
   
-  env = getEnv();
+  env = getEnv(&active_attach);
   if (env != OFC_NULL)
     {
       jFile = (jobject) rfile;
@@ -800,7 +826,7 @@ OFC_INT resolver_trylock(RESOLVER_FILE *rfile, OFC_UINT64 offset,
 			    g_method_trylock,
 			    jFile, joffset, jsize, jshared);
       ret = 0;
-      relEnv(env);
+      relEnv(env, active_attach);
     }
   return (ret);
 }
