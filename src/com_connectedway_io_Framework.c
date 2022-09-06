@@ -1129,13 +1129,11 @@ jobject new_interface (JNIEnv *env, jobject objFramework,
      "(Lcom/connectedway/io/Framework$netBIOSMode;Ljava/net/InetAddress;Ljava/net/InetAddress;Ljava/net/InetAddress;Ljava/lang/String;[Ljava/net/InetAddress;)Lcom/connectedway/io/Framework$Interface;") ; 
   (*env)->DeleteLocalRef (env, clsBlueFramework) ;
 
-#if 0
   objInterface = (*env)->CallObjectMethod (env, objFramework, midNewInterface,
 					   objNetBiosMode, 
 					   objInetAddress, objBcastAddress, 
 					   objMaskAddress, jstrLmb, arrayWins) ;
   (*env)->DeleteLocalRef (env, objNetBiosMode) ;
-#endif
   (*env)->DeleteLocalRef (env, objInetAddress) ;
   (*env)->DeleteLocalRef (env, objBcastAddress) ;
   (*env)->DeleteLocalRef (env, objMaskAddress) ;
