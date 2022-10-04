@@ -1342,3 +1342,30 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_statsHeap
   ofc_framework_stats_heap() ;
 }
   
+JNIEXPORT jobject JNICALL Java_com_connectedway_io_Framework_getConfig
+(JNIEnv *env, jobject objFramework)
+{
+  OFC_LPVOID buf;
+  OFC_SIZET len;
+  jbyteArray bArray ;
+
+  ofc_framework_savebuf(&buf, &len);
+  bArray = (*env)->NewByteArray(env, len) ;
+  (*env)->SetByteArrayRegion (env, bArray, 0, len, buf) ;
+  ofc_free(buf);
+  return (bArray);
+}
+
+JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_putConfig
+(JNIEnv *env, jobject objFramework, jobject plainConfig)
+{
+  OFC_LPVOID buf;
+  OFC_SIZET len;
+
+  len = (OFC_SIZET) (*env)->GetArrayLength(env, plainConfig);
+  buf = ofc_malloc(len);
+
+  ofc_memcpy(buf, (*env)->GetByteArrayElements(env, plainConfig, 0), len);
+  ofc_framework_loadbuf(buf, len);
+  ofc_free(buf);
+}             
