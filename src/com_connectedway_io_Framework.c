@@ -1369,3 +1369,15 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_putConfig
   ofc_framework_loadbuf(buf, len);
   ofc_free(buf);
 }             
+
+JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setConfigPath
+(JNIEnv *env, jobject objFramework, jstring jstringFile)
+{
+  OFC_LPTSTR tstrFile ;
+
+  tstrFile = jstr2tchar (env, jstringFile) ;
+  ofc_set_config_path(tstrFile);
+  ofc_free(tstrFile);
+}
+
+  
