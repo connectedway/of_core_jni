@@ -21,9 +21,15 @@
 #include "ofc/thread.h"
 #include "ofc/file.h"
 #include "ofc/fstype.h"
+#include "ofc/handle.h"
+#include "ofc/event.h"
+#include "ofc/waitset.h"
+#include "ofc/process.h"
 
 #include "ofc_jni/com_connectedway_io_Utils.h"
 #include "ofc_jni/com_connectedway_io_FileSystem.h"
+
+#define OVERLAPPED_IO
 
 /*
  * Class:     com_connectedway_io_FileSystem
@@ -1388,8 +1394,63 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
 /*
  * Class:     com_connectedway_io_FileSystem
  * Method:    read
+ * Signature: (Lcom/connectedway/io/FileDescriptor;[B)I
+ */
+JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedway_io_FileDescriptor_2_3B
+(JNIEnv *env, jobject objFs, jobject objFd, jbyteArray arrayB) {
+  OFC_HANDLE hFile ;
+  jint jiBytesRead ;
+  OFC_DWORD nRead ;
+  jbyte *jbBuffer ;
+  OFC_CHAR *lpcBuffer ;
+  OFC_SIZET bsizeBuffer ;
+  jint jiWorkingOffset ;
+  OFC_BOOL eof ;
+  jint jiLen;
+
+#if 0
+  ofc_printf ("%s:%s:%d\n", __FILE__, __func__, __LINE__) ;
+#endif
+  hFile = file_descriptor_get_handle (env, objFd) ;
+  jbBuffer = (*env)->GetByteArrayElements (env, arrayB, NULL) ;
+
+  jiWorkingOffset = 0 ;
+  jiBytesRead = 0 ;
+  jiLen = (*env)->GetArrayLength(env, arrayB);
+
+  for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
+    {
+      lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
+      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
+
+      if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
+			OFC_HANDLE_NULL) == OFC_FALSE)
+
+	{
+	  nRead = 0 ;
+	  eof = 1 ;
+	  if (OfcGetLastError() != OFC_ERROR_HANDLE_EOF) 
+	    throwio(env) ;
+	}
+      jiBytesRead += nRead ;
+      jiWorkingOffset += nRead ;
+      jiLen -= nRead ;
+    }
+
+  (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
+
+  if (jiBytesRead == 0)
+    jiBytesRead = -1 ;
+
+  return (jiBytesRead) ;
+}
+
+/*
+ * Class:     com_connectedway_io_FileSystem
+ * Method:    read
  * Signature: (Lcom/connectedway/io/FileDescriptor;[BII)I
  */
+#if !defined(OVERLAPPED_IO)
 JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedway_io_FileDescriptor_2_3BII
   (JNIEnv *env, jobject objFs, jobject objFd, jbyteArray arrayB, 
    jint jiOffset, jint jiLen) {
@@ -1438,6 +1499,475 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
 
   return (jiBytesRead) ;
 }
+#else
+/*
+ * Buffering definitions.  We test using overlapped asynchronous I/O.  This
+ * implies multi-buffering
+ *
+ * The Buffer Size
+ */
+#define BUFFER_SIZE OFC_MAX_IO
+/*
+ * And the number of buffers
+ */
+#define NUM_FILE_BUFFERS 10
+/*
+ * Define buffer states.
+ */
+typedef enum {
+  BUFFER_STATE_IDLE,        /* There is no I/O active */
+  BUFFER_STATE_READ,        /* Data is being read into the buffer */
+  BUFFER_STATE_WRITE        /* Data is being written from the buffer */
+} BUFFER_STATE;
+/*
+ * This buffering stuff should be part of a utility library
+ */
+
+/*
+ * The buffer context
+ *
+ * Currently, handles to the overlapped i/o context may be platform
+ * dependent.  Because of this, an overlapped i/o may not be shared
+ * between files unless it is guaranteed that the files are on the
+ * same device (using the same type of overlapped context).
+ *
+ * Ideally, overlapped I/Os should be platform independent. This will
+ * require changes to the way overlapped handles are managed.
+ */
+typedef struct {
+  OFC_HANDLE readOverlapped;    /* The handle to the buffer when reading */
+  OFC_HANDLE writeOverlapped;    /* The handle to the buffer when writing */
+  OFC_CHAR *data;        /* Pointer to the buffer */
+  BUFFER_STATE state;        /* Buffer state */
+  OFC_LARGE_INTEGER offset;    /* Offset in file for I/O */
+} OFC_FILE_BUFFER;
+/*
+ * Result of Async I/O
+ *
+ * This essentially is a OFC_BOOL with the addition of a PENDING flag
+ */
+typedef enum {
+  ASYNC_RESULT_DONE,        /* I/O is successful */
+  ASYNC_RESULT_ERROR,        /* I/O was in error */
+  ASYNC_RESULT_EOF,        /* I/O hit EOF */
+  ASYNC_RESULT_PENDING    /* I/O is still pending */
+} ASYNC_RESULT;
+
+/*
+ * Perform an I/O Read
+ *
+ * \param wait_set
+ * The wait set that this I/O and it's overlapped handles will be part of
+ *
+ * \param read_file
+ * Handle of read file
+ *
+ * \param buffer
+ * Pointer to buffer to read into
+ *
+ * \param dwLen
+ * Length of buffer to read
+ *
+ * \returns
+ * OFC_TRUE if success, OFC_FALSE otherwise
+ */
+static ASYNC_RESULT
+AsyncRead(OFC_HANDLE wait_set, OFC_HANDLE read_file,
+          OFC_FILE_BUFFER *buffer, OFC_DWORD dwLen)
+{
+  ASYNC_RESULT result;
+  OFC_BOOL status;
+
+  /*
+   * initialize the read buffer using the read file, the read overlapped
+   * handle and the current read offset
+   */
+  ofc_trace ("Reading 0x%08x\n", OFC_LARGE_INTEGER_LOW(buffer->offset));
+  OfcSetOverlappedOffset(read_file, buffer->readOverlapped, buffer->offset);
+  /*
+   * Set the state to reading
+   */
+  buffer->state = BUFFER_STATE_READ;
+  /*
+   * Add the buffer to the wait set
+   */
+  ofc_waitset_add(wait_set, (OFC_HANDLE) buffer, buffer->readOverlapped);
+  /*
+   * Issue the read (this will be non blocking)
+   */
+  status = OfcReadFile(read_file, buffer->data, dwLen,
+                       OFC_NULL, buffer->readOverlapped);
+  /*
+   * If it completed, the status will be OFC_TRUE.  We actually expect
+   * the status to fail and the last error to be OFC_ERROR_IO_PENDING
+   */
+  if (status == OFC_TRUE)
+    {
+      if (*((OFC_ULONG *)(buffer->data)) != buffer->offset)
+        ofc_printf("got bad buffer in async read 0x%08x, 0x%08x\n",
+                   *((OFC_ULONG *)(buffer->data)), buffer->offset);
+      result = ASYNC_RESULT_DONE;
+    }
+  else
+    {
+      OFC_DWORD dwLastError;
+      /*
+       * Let's check the last error
+       */
+      dwLastError = OfcGetLastError();
+      if (dwLastError == OFC_ERROR_IO_PENDING)
+        {
+          /*
+           * This is what we expect, so say the I/O submission succeeded
+           */
+          result = ASYNC_RESULT_PENDING;
+        }
+      else
+        {
+          if (dwLastError == OFC_ERROR_HANDLE_EOF)
+            result = ASYNC_RESULT_EOF;
+          else
+            result = ASYNC_RESULT_ERROR;
+          /*
+           * It's not pending
+           */
+          buffer->state = BUFFER_STATE_IDLE;
+          ofc_waitset_remove(wait_set, buffer->readOverlapped);
+        }
+    }
+
+  return (result);
+}
+
+/*
+ * Return the state of the read
+ *
+ * \param wait_set
+ * Wait set that the I/O should be part of
+ *
+ * \param read_file
+ * Handle to the read file
+ *
+ * \param buffer
+ * Pointer to the buffer
+ *
+ * \param dwLen
+ * Number of bytes to read / number of bytes read
+ *
+ * \returns
+ * state of the read
+ */
+static ASYNC_RESULT AsyncReadResult(OFC_HANDLE wait_set,
+                                    OFC_HANDLE read_file,
+                                    OFC_FILE_BUFFER *buffer,
+                                    OFC_DWORD *dwLen)
+{
+  ASYNC_RESULT result;
+  OFC_BOOL status;
+
+  /*
+   * Get the overlapped result
+   */
+  status = OfcGetOverlappedResult(read_file, buffer->readOverlapped,
+                                  dwLen, OFC_FALSE);
+  /*
+   * If the I/O is complete, status will be true and length will be non zero
+   */
+  if (status == OFC_TRUE)
+    {
+      if (*dwLen == 0)
+        {
+          result = ASYNC_RESULT_EOF;
+        }
+      else
+        {
+          result = ASYNC_RESULT_DONE;
+        }
+    }
+  else
+    {
+      OFC_DWORD dwLastError;
+      /*
+       * I/O may still be pending
+       */
+      dwLastError = OfcGetLastError();
+      if (dwLastError == OFC_ERROR_IO_PENDING)
+        result = ASYNC_RESULT_PENDING;
+      else
+        {
+          /*
+           * I/O may also be EOF
+           */
+          if (dwLastError != OFC_ERROR_HANDLE_EOF)
+            {
+              ofc_printf("Read Error %d\n", dwLastError);
+              result = ASYNC_RESULT_ERROR;
+            }
+          else
+            result = ASYNC_RESULT_EOF;
+        }
+    }
+
+  if (result != ASYNC_RESULT_PENDING)
+    {
+      /*
+       * Finish up the buffer if the I/O is no longer pending
+       */
+      buffer->state = BUFFER_STATE_IDLE;
+      ofc_waitset_remove(wait_set, buffer->readOverlapped);
+    }
+
+  return (result);
+}
+
+/*
+ * Submit an asynchronous Write
+ */
+static ASYNC_RESULT AsyncWrite(OFC_HANDLE wait_set, OFC_HANDLE write_file,
+                               OFC_FILE_BUFFER *buffer, OFC_DWORD dwLen)
+{
+  OFC_BOOL status;
+  ASYNC_RESULT result;
+
+  ofc_trace ("Writing 0x%08x\n", OFC_LARGE_INTEGER_LOW(buffer->offset));
+  OfcSetOverlappedOffset(write_file, buffer->writeOverlapped,
+                         buffer->offset);
+
+  buffer->state = BUFFER_STATE_WRITE;
+  ofc_waitset_add(wait_set, (OFC_HANDLE) buffer, buffer->writeOverlapped);
+
+  status = OfcWriteFile(write_file, buffer->data, dwLen, OFC_NULL,
+                        buffer->writeOverlapped);
+
+  result = ASYNC_RESULT_DONE;
+  if (status != OFC_TRUE)
+    {
+      OFC_DWORD dwLastError;
+
+      dwLastError = OfcGetLastError();
+      if (dwLastError == OFC_ERROR_IO_PENDING)
+        result = ASYNC_RESULT_PENDING;
+      else
+        {
+          result = ASYNC_RESULT_ERROR;
+          buffer->state = BUFFER_STATE_IDLE;
+          ofc_waitset_remove(wait_set, buffer->writeOverlapped);
+        }
+    }
+  return (result);
+}
+
+static ASYNC_RESULT AsyncWriteResult(OFC_HANDLE wait_set,
+                                     OFC_HANDLE write_file,
+                                     OFC_FILE_BUFFER *buffer,
+                                     OFC_DWORD *dwLen)
+{
+  ASYNC_RESULT result;
+  OFC_BOOL status;
+
+  status = OfcGetOverlappedResult(write_file, buffer->writeOverlapped,
+                                  dwLen, OFC_FALSE);
+  if (status == OFC_TRUE)
+    result = ASYNC_RESULT_DONE;
+  else
+    {
+      OFC_DWORD dwLastError;
+
+      dwLastError = OfcGetLastError();
+      if (dwLastError == OFC_ERROR_IO_PENDING)
+        result = ASYNC_RESULT_PENDING;
+      else
+        {
+          ofc_printf("Write Error %d\n", dwLastError);
+          result = ASYNC_RESULT_ERROR;
+        }
+    }
+
+  if (result != ASYNC_RESULT_PENDING)
+    {
+      buffer->state = BUFFER_STATE_IDLE;
+      ofc_waitset_remove(wait_set, buffer->writeOverlapped);
+    }
+
+  return (result);
+}
+ 
+JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedway_io_FileDescriptor_2_3BII
+  (JNIEnv *env, jobject objFs, jobject objFd, jbyteArray arrayB, 
+   jint jiOffset, jint jiLen) {
+
+  OFC_HANDLE hFile ;
+  jint jiBytesRead ;
+  jbyte *jbBuffer ;
+  OFC_BOOL eof ;
+  OFC_LARGE_INTEGER file_offset;
+  OFC_OFFT buffer_offset;
+  OFC_INT pending;
+  OFC_HANDLE buffer_list;
+  OFC_FILE_BUFFER *buffer;
+  OFC_INT i;
+  OFC_HANDLE wait_set;
+  OFC_DWORD dwLen;
+  ASYNC_RESULT result;
+  OFC_HANDLE hEvent;
+  
+#if 0
+  ofc_printf ("%s:%s:%d\n", __FILE__, __func__, __LINE__) ;
+#endif
+  hFile = file_descriptor_get_handle (env, objFd) ;
+  jbBuffer = (*env)->GetByteArrayElements (env, arrayB, NULL) ;
+
+  jiBytesRead = 0 ;
+
+  wait_set = ofc_waitset_create();
+  buffer_list = ofc_queue_create();
+
+  file_offset = jiOffset ;
+  buffer_offset = 0;
+  eof = OFC_FALSE;
+  pending = 0;
+  
+  for (i = 0; i < NUM_FILE_BUFFERS && !eof && buffer_offset < jiLen; i++)
+    {
+      /*
+       * Get the buffer descriptor and the data buffer
+       */
+      buffer = ofc_malloc(sizeof(OFC_FILE_BUFFER));
+      if (buffer == OFC_NULL)
+        {
+          ofc_printf("test_file: Failed to alloc buffer context\n");
+          eof = OFC_TRUE;
+        }
+      else
+        {
+          buffer->data = (OFC_CHAR *) jbBuffer + buffer_offset ;
+          buffer->offset = file_offset;
+          buffer->readOverlapped = OfcCreateOverlapped(hFile);
+          if (buffer->readOverlapped == OFC_HANDLE_NULL)
+            ofc_process_crash("An Overlapped Handle is NULL");
+
+          /*
+           * Add it to our buffer list
+           */
+          ofc_enqueue(buffer_list, buffer);
+
+          pending++;
+          dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+          result = AsyncRead(wait_set, hFile, buffer, dwLen);
+          if (result != ASYNC_RESULT_PENDING)
+            {
+              /*
+               * discount pending and set eof
+               */
+              pending--;
+              /*
+               * Set eof either because it really is eof, or we
+               * want to clean up.
+               */
+              eof = OFC_TRUE;
+            }
+          /*
+           * Prepare for the next buffer
+           */
+          buffer_offset += dwLen;
+          file_offset += dwLen;
+        }
+    }
+
+  /*
+   * Now all our buffers should be busy doing reads.  Keep pumping
+   * more data to read and service writes
+   */
+  while (pending > 0)
+    {
+      /*
+       * Wait for some buffer to finish (may be a read if we've
+       * just finished priming, but it may be a write also if
+       * we've been in this loop a bit
+       */
+      hEvent = ofc_waitset_wait(wait_set);
+      if (hEvent != OFC_HANDLE_NULL)
+        {
+          /*
+           * We use the app of the event as a pointer to the
+           * buffer descriptor.  Yeah, this isn't really nice but
+           * the alternative is to add a context to each handle.
+           * That may be cleaner, but basically unnecessary.  If
+           * we did this kind of thing a lot, I'm all for a
+           * new property of a handle
+           */
+          buffer = (OFC_FILE_BUFFER *) ofc_handle_get_app(hEvent);
+
+          if (buffer->state == BUFFER_STATE_READ)
+            {
+              /*
+               * Read, so let's see the result of the read
+               */
+              result = AsyncReadResult(wait_set, hFile,
+                                       buffer, &dwLen);
+              if (result == ASYNC_RESULT_DONE)
+                {
+                  jiBytesRead += dwLen ;
+
+                  dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+                  if (dwLen > 0)
+                    {
+                      buffer->data = (OFC_CHAR *) jbBuffer + buffer_offset ;
+                      buffer->offset = file_offset;
+                      /*
+                       * And start a read on the next chunk
+                       */
+                      result = AsyncRead(wait_set, hFile,
+                                         buffer, dwLen);
+                      buffer_offset += dwLen;
+                      file_offset += dwLen;
+                    }
+                }
+
+              if (result != ASYNC_RESULT_PENDING)
+                {
+                  pending--;
+                  eof = OFC_TRUE;
+                }
+            }
+        }
+    }
+
+  /*
+   * The pending count is zero so we've gotten completions
+   * either due to errors or eof on all of our outstanding
+   * reads and writes.
+   */
+  for (buffer = ofc_dequeue(buffer_list);
+       buffer != OFC_NULL;
+       buffer = ofc_dequeue(buffer_list))
+    {
+      /*
+       * Destroy the overlapped I/O handle for each buffer
+       */
+      OfcDestroyOverlapped(hFile, buffer->readOverlapped);
+      /*
+       * Free the buffer descriptor
+       */
+      ofc_free(buffer);
+    }
+  /*
+   * Destroy the buffer list
+   */
+  ofc_queue_destroy(buffer_list);
+  /*
+   * And destroy the wait list
+   */
+  ofc_waitset_destroy(wait_set);
+  
+  (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
+
+  if (jiBytesRead == 0)
+    jiBytesRead = -1 ;
+
+  return (jiBytesRead) ;
+}
+#endif
 
 /*
  * Class:     com_connectedway_io_FileSystem
@@ -1467,12 +1997,59 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connected
 /*
  * Class:     com_connectedway_io_FileSystem
  * Method:    write
+ * Signature: (Lcom/connectedway/io/FileDescriptor;[B)I
+ */
+JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connectedway_io_FileDescriptor_2_3B
+(JNIEnv *env, jobject objFs, jobject objFd, jbyteArray arrayB) {
+  OFC_HANDLE hFile ;
+  OFC_DWORD nWritten ;
+  jbyte *jbBuffer ;
+  OFC_SIZET bsizeBuffer ;
+  OFC_CHAR *lpcBuffer ;
+  jint jiWorkingOffset ;
+  jint jiBytesWritten ;
+  OFC_BOOL eof ;
+  jint jiLen;
+
+#if 0
+  ofc_printf ("%s:%s:%d\n", __FILE__, __func__, __LINE__) ;
+#endif
+  hFile = file_descriptor_get_handle (env, objFd) ;
+  jbBuffer = (*env)->GetByteArrayElements (env, arrayB, NULL) ;
+
+  jiWorkingOffset = 0 ;
+  jiBytesWritten = 0 ;
+  jiLen = (*env)->GetArrayLength(env, arrayB);
+
+  for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
+    {
+      lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
+      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
+
+      if (OfcWriteFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nWritten, 
+			 OFC_HANDLE_NULL) == OFC_FALSE)
+	{
+	  nWritten = 0 ;
+	  eof = 1 ;
+
+	  throwio(env) ;
+	}
+      jiBytesWritten += nWritten ;
+      jiWorkingOffset += nWritten ;
+      jiLen -= nWritten ;
+    }
+  (*env)->ReleaseByteArrayElements (env, arrayB, jbBuffer, 0) ;
+}
+
+/*
+ * Class:     com_connectedway_io_FileSystem
+ * Method:    write
  * Signature: (Lcom/connectedway/io/FileDescriptor;[BII)V
  */
+#if !defined(OVERLAPPED_IO)
 JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connectedway_io_FileDescriptor_2_3BII
 (JNIEnv *env, jobject objFs, jobject objFd, jbyteArray jarrayByte, 
  jint jiOffset, jint jiLen) {
-
   OFC_HANDLE hFile ;
   OFC_DWORD nWritten ;
   jbyte *jbBuffer ;
@@ -1509,8 +2086,179 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connected
       jiLen -= nWritten ;
     }
   (*env)->ReleaseByteArrayElements (env, jarrayByte, jbBuffer, 0) ;
-
 }
+#else
+JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connectedway_io_FileDescriptor_2_3BII
+(JNIEnv *env, jobject objFs, jobject objFd, jbyteArray arrayB, 
+ jint jiOffset, jint jiLen) {
+
+  OFC_HANDLE hFile ;
+  jint jiBytesWritten ;
+  jbyte *jbBuffer ;
+  OFC_BOOL eof ;
+  OFC_LARGE_INTEGER file_offset;
+  OFC_OFFT buffer_offset;
+  OFC_INT pending;
+  OFC_HANDLE buffer_list;
+  OFC_FILE_BUFFER *buffer;
+  OFC_INT i;
+  OFC_HANDLE wait_set;
+  OFC_DWORD dwLen;
+  ASYNC_RESULT result;
+  OFC_HANDLE hEvent;
+
+#if 0
+  ofc_printf ("%s:%s:%d\n", __FILE__, __func__, __LINE__) ;
+#endif
+  hFile = file_descriptor_get_handle (env, objFd) ;
+  jbBuffer = (*env)->GetByteArrayElements (env, arrayB, NULL) ;
+
+  jiBytesWritten = 0 ;
+
+  wait_set = ofc_waitset_create();
+  buffer_list = ofc_queue_create();
+
+  file_offset = jiOffset;
+  buffer_offset = 0;
+  eof = OFC_FALSE;
+  pending = 0;
+      
+  for (i = 0; i < NUM_FILE_BUFFERS && !eof && buffer_offset < jiLen; i++)
+    {
+      /*
+       * Get the buffer descriptor and the data buffer
+       */
+      buffer = ofc_malloc(sizeof(OFC_FILE_BUFFER));
+      if (buffer == OFC_NULL)
+        {
+          ofc_printf("test_file: Failed to alloc buffer context\n");
+          eof = OFC_TRUE;
+        }
+      else
+        {
+          buffer->data = (OFC_CHAR *) jbBuffer + buffer_offset;
+          buffer->offset = file_offset;
+
+          buffer->writeOverlapped = OfcCreateOverlapped(hFile);
+          if (buffer->writeOverlapped == OFC_HANDLE_NULL)
+            ofc_process_crash("An Overlapped Handle is NULL");
+
+          /*
+           * Add it to our buffer list
+           */
+          ofc_enqueue(buffer_list, buffer);
+
+          pending++;
+          dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+          result = AsyncWrite(wait_set, hFile, buffer, dwLen);
+          if (result != ASYNC_RESULT_PENDING)
+            {
+              /*
+               * discount pending and set eof
+               */
+              pending--;
+              /*
+               * Set eof either because it really is eof, or we
+               * want to clean up.
+               */
+              eof = OFC_TRUE;
+            }
+          /*
+           * Prepare for the next buffer
+           */
+          buffer_offset += dwLen;
+          file_offset += dwLen;
+        }
+    }
+
+  /*
+   * Now all our buffers should be busy doing writes.  Keep writing
+   */
+  while (pending > 0)
+    {
+      /*
+       * Wait for some buffer to finish (may be a read if we've
+       * just finished priming, but it may be a write also if
+       * we've been in this loop a bit
+       */
+      hEvent = ofc_waitset_wait(wait_set);
+      if (hEvent != OFC_HANDLE_NULL)
+        {
+          /*
+           * We use the app of the event as a pointer to the
+           * buffer descriptor.  Yeah, this isn't really nice but
+           * the alternative is to add a context to each handle.
+           * That may be cleaner, but basically unnecessary.  If
+           * we did this kind of thing a lot, I'm all for a
+           * new property of a handle
+           */
+          buffer = (OFC_FILE_BUFFER *) ofc_handle_get_app(hEvent);
+
+          if (buffer->state == BUFFER_STATE_WRITE)
+            {
+              /*
+               * Write, so let's see the result of the write
+               */
+              result = AsyncWriteResult(wait_set, hFile,
+                                        buffer, &dwLen);
+              if (result == ASYNC_RESULT_DONE)
+                {
+                  jiBytesWritten += dwLen;
+
+                  dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+                  if (dwLen > 0)
+                    {
+                      buffer->data = (OFC_CHAR *) jbBuffer + buffer_offset;
+                      buffer->offset = file_offset;
+                      
+                      result = AsyncWrite(wait_set, hFile,
+                                          buffer, dwLen);
+                      buffer_offset += dwLen;
+                      file_offset += dwLen;
+                    }
+                }
+              if (result != ASYNC_RESULT_PENDING)
+                {
+                  pending--;
+                  eof = OFC_TRUE;
+                }
+            }
+        }
+    }
+
+  /*
+   * The pending count is zero so we've gotten completions
+   * either due to errors or eof on all of our outstanding
+   * reads and writes.
+   */
+  for (buffer = ofc_dequeue(buffer_list);
+       buffer != OFC_NULL;
+       buffer = ofc_dequeue(buffer_list))
+    {
+      /*
+       * Destroy the overlapped I/O handle for each buffer
+       */
+      OfcDestroyOverlapped(hFile, buffer->writeOverlapped);
+      /*
+       * Free the buffer descriptor
+       */
+      ofc_free(buffer);
+    }
+  /*
+   * Destroy the buffer list
+   */
+  ofc_queue_destroy(buffer_list);
+  /*
+   * And destroy the wait list
+   */
+  ofc_waitset_destroy(wait_set);
+
+  (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
+
+  if (jiBytesWritten != jiLen)
+    throwio(env) ;
+}
+#endif
 
 /*
  * Class:     com_connectedway_io_FileSystem
