@@ -37,7 +37,7 @@ static OFC_UINT get_library_address()
 	{ 
 	  // dump entire file (all lines)
 	  // but also search for libandroidsmb
-	  ofc_printf ("%s", buff) ;
+	  ofc_log (OFC_LOG_INFO, "%s", buff) ;
 	} 
     }
   fclose (file); 
@@ -52,7 +52,7 @@ static OFC_UINT get_library_address()
 	{ 
 	  // dump entire file (all lines)
 	  // but also search for libandroidsmb
-	  ofc_printf ("%s", buff) ;
+	  ofc_log (OFC_LOG_INFO, "%s", buff) ;
 	  OFC_INT len = ofc_strlen(buff); 
 
 	  if (len > 0 && buff[len-1] == '\n') 
@@ -100,7 +100,8 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_init
 #if defined(__ANDROID__) || defined(ANDROID)
   /* TBD: Fix get_library_addresses on latest android */
 #if 0
-  ofc_printf ("libanddroidsmb loaded at 0x%08x\n", get_library_address()) ;
+  ofc_log (OFC_LOG_INFO,
+	   "libanddroidsmb loaded at 0x%08x\n", get_library_address()) ;
 #endif
 #endif
 }
@@ -547,7 +548,7 @@ OFC_VOID interface_get_wins (JNIEnv *env, jobject objInterface,
   jclass clsInterface ;
 
   if (objInterface == NULL)
-    ofc_printf ("Wins is null\n") ;
+    ofc_log (OFC_LOG_WARN, "Wins is null\n") ;
   else
     {
       clsInterface = (*env)->FindClass
@@ -960,8 +961,9 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_Framework_setLMB
       if (ofc_net_subnet_match (&ipaddr, &if_ip, &if_mask))
 	{
 	  ofc_persist_set_local_master (i, strLmb) ;
-	  ofc_printf ("Local Master Browser for Interface %s Set to %s\n", 
-		       ofc_ntop (&if_ip, ip_addr, IP6STR_LEN), strLmb) ;
+	  ofc_log (OFC_LOG_INFO,
+		   "Local Master Browser for Interface %s Set to %s\n", 
+		   ofc_ntop (&if_ip, ip_addr, IP6STR_LEN), strLmb) ;
 	  ret = JNI_TRUE ;
 	}
     }
@@ -1319,7 +1321,7 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_println
 
   tstrout = jstr2tchar (env, out) ;
 
-  ofc_printf ("%s: %S\n", __func__, tstrout) ;
+  ofc_log (OFC_LOG_INFO, "%s: %S\n", __func__, tstrout) ;
   ofc_free (tstrout) ;
 
 }

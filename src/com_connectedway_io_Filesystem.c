@@ -461,8 +461,9 @@ jint get_boolean_attributes (OFC_LPCTSTR tstrPath)
     }
   else
     {
-      ofc_printf ("%s: OfcGetFileAttributesExW failed for %S, Last Error %d\n",
-		   __func__, tstrPath, OfcGetLastError()) ;
+      ofc_log (OFC_LOG_WARN,
+	       "%s: OfcGetFileAttributesExW failed for %S, Last Error %d\n",
+	       __func__, tstrPath, OfcGetLastError()) ;
     }
 
   return (booleanAttributes) ;
@@ -694,10 +695,11 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_delete
         
       if (dirHandle == OFC_INVALID_HANDLE_VALUE)
 	{
-	  ofc_printf("Failed to create delete on close dir %A, "
-		     "Error Code %d\n",
-		     tstrPath,
-		     OfcGetLastError ()) ;
+	  ofc_log(OFC_LOG_WARN,
+		  "Failed to create delete on close dir %A, "
+		  "Error Code %d\n",
+		  tstrPath,
+		  OfcGetLastError ()) ;
 	  retDelete = OFC_FALSE ;
 	}
       else
@@ -708,9 +710,10 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_delete
 	  if (retDelete != OFC_TRUE)
 	    {
 	      dwLastError = OfcGetLastError () ;
-	      ofc_printf ("Close of Delete on close dir "
-			  "Failed with Error %d\n",
-			  dwLastError) ;
+	      ofc_log (OFC_LOG_WARN,
+		       "Close of Delete on close dir "
+		       "Failed with Error %d\n",
+		       dwLastError) ;
 	    }
 	}
     }
@@ -1604,8 +1607,9 @@ AsyncRead(OFC_HANDLE wait_set, OFC_HANDLE read_file,
   if (status == OFC_TRUE)
     {
       if (*((OFC_ULONG *)(buffer->data)) != buffer->offset)
-        ofc_printf("got bad buffer in async read 0x%08x, 0x%08x\n",
-                   *((OFC_ULONG *)(buffer->data)), buffer->offset);
+        ofc_log(OFC_LOG_WARN,
+		"got bad buffer in async read 0x%08x, 0x%08x\n",
+		*((OFC_ULONG *)(buffer->data)), buffer->offset);
       result = ASYNC_RESULT_DONE;
     }
   else
@@ -1700,7 +1704,7 @@ static ASYNC_RESULT AsyncReadResult(OFC_HANDLE wait_set,
            */
           if (dwLastError != OFC_ERROR_HANDLE_EOF)
             {
-              ofc_printf("Read Error %d\n", dwLastError);
+              ofc_log(OFC_LOG_WARN, "Read Error %d\n", dwLastError);
               result = ASYNC_RESULT_ERROR;
             }
           else
@@ -1778,7 +1782,7 @@ static ASYNC_RESULT AsyncWriteResult(OFC_HANDLE wait_set,
         result = ASYNC_RESULT_PENDING;
       else
         {
-          ofc_printf("Write Error %d\n", dwLastError);
+          ofc_log(OFC_LOG_WARN, "Write Error %d\n", dwLastError);
           result = ASYNC_RESULT_ERROR;
         }
     }
@@ -1835,7 +1839,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
       buffer = ofc_malloc(sizeof(OFC_FILE_BUFFER));
       if (buffer == OFC_NULL)
         {
-          ofc_printf("test_file: Failed to alloc buffer context\n");
+          ofc_log(OFC_LOG_WARN, "test_file: Failed to alloc buffer context\n");
           eof = OFC_TRUE;
         }
       else
@@ -2131,7 +2135,7 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connected
       buffer = ofc_malloc(sizeof(OFC_FILE_BUFFER));
       if (buffer == OFC_NULL)
         {
-          ofc_printf("test_file: Failed to alloc buffer context\n");
+          ofc_log(OFC_LOG_WARN, "test_file: Failed to alloc buffer context\n");
           eof = OFC_TRUE;
         }
       else
