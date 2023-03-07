@@ -349,6 +349,20 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setInterfaceDiscovery
 
 /*
  * Class:     com_connectedway_io_Framework
+ * Method:    setNetworkHandle
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_setNetworkHandle
+  (JNIEnv *env, jobject objFramework, jlong handle)
+{
+  OFC_UINT64 network_handle;
+  
+  network_handle = handle;
+  ofc_framework_set_network_handle(network_handle) ;
+}
+
+/*
+ * Class:     com_connectedway_io_Framework
  * Method:    getInterfaceDiscovery
  * Signature: ()Z
  */

@@ -44,7 +44,12 @@ add_library(of_core_jni SHARED ${SRCS})
 set_target_properties(of_core_jni PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(of_core_jni PROPERTIES SOVERSION 1)
 
-target_link_libraries(of_core_jni PRIVATE of_core_static ${JNI_LIBRARIES})
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+   set(additional_libs android)
+endif()
+
+target_link_libraries(of_core_jni PRIVATE of_core_static ${JNI_LIBRARIES}
+     ${additional_libs})
 
 add_subdirectory(java)
 
