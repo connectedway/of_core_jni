@@ -16,8 +16,10 @@
 OFC_SIZET jstrlen (const jchar *jstr) ;
 jchar *tchar2jchar (OFC_CTCHAR *tstr) ;
 OFC_LPTSTR jstr2tchar (JNIEnv *env, jstring jstrPath) ;
+OFC_LPSTR jstr2char (JNIEnv *env, jstring jstrPath) ;
 jstring tchar2jstr (JNIEnv *env, OFC_LPCTSTR tstrPath) ;
 OFC_TCHAR *jchar2tchar (const jchar *jstr, jsize len) ;
+OFC_CHAR *jchar2char (const jchar *jstr, jsize len) ;
 OFC_LPTSTR file_get_path (JNIEnv *env, jobject objFile) ;
 OFC_VOID file_free_path (OFC_LPTSTR path) ;
 jobject new_file (JNIEnv *env, jstring jstrPath) ;

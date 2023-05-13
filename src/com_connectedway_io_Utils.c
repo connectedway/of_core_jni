@@ -62,6 +62,17 @@ OFC_LPTSTR jstr2tchar (JNIEnv *env, jstring jstrPath)
   return (tstrPath) ;
 }
 
+OFC_LPSTR jstr2char (JNIEnv *env, jstring jstrPath)
+{
+  const jchar *jcharPath ;
+  OFC_LPSTR strPath;
+
+  jcharPath = (*env)->GetStringChars (env, jstrPath, NULL) ;
+  strPath = jchar2char (jcharPath, (*env)->GetStringLength (env, jstrPath)) ;
+  (*env)->ReleaseStringChars (env, jstrPath, jcharPath) ;
+  return (strPath) ;
+}
+
 jstring tchar2jstr (JNIEnv *env, OFC_LPCTSTR tstrPath)
 {
   jchar *jcharPath ;
@@ -96,6 +107,29 @@ jchar2tchar (const jchar *jstr, jsize len)
       *ptstr = TCHAR_EOS ;
     }
   return (tstr) ;
+}
+
+OFC_CHAR *
+jchar2char (const jchar *jstr, jsize len)
+{
+  OFC_CHAR *str ;
+  OFC_INT i ;
+  const jchar *pjstr ;
+  OFC_CHAR *pstr ;
+
+  str = OFC_NULL ;
+  if (jstr != OFC_NULL)
+    {
+      str = ofc_malloc ((len + 1) * sizeof (OFC_CHAR)) ;
+      pstr = str ;
+      pjstr = jstr ;
+      for (i = 0 ; i < len ; i++)
+	{
+	  *pstr++ = (OFC_CHAR) *pjstr++ ;
+	}
+      *pstr = '\0' ;
+    }
+  return (str) ;
 }
 
 OFC_LPTSTR file_get_path (JNIEnv *env, jobject objFile)
