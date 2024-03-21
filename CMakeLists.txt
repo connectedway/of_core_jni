@@ -48,6 +48,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
    set(additional_libs android)
 endif()
 
+if (OF_RESOLVER_FS)
+    message("Adding FS Resolver")
+    list(APPEND additional_libs of_resolver_fs)
+endif ()
+
 target_link_libraries(of_core_jni PRIVATE of_core_static ${JNI_LIBRARIES}
      ${additional_libs})
 
