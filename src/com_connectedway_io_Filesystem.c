@@ -810,7 +810,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listFiles
   else
     {
       if (ofc_tstrcmp (find_data->cFileName, TSTR("..")) != 0 &&
-	  ofc_tstrcmp (find_data->cFileName, TSTR(".")) != 0)
+	  ofc_tstrcmp (find_data->cFileName, TSTR(".")) != 0 &&
+          !(find_data->dwFileAttributes & OFC_FILE_ATTRIBUTE_HIDDEN))
 	{
 	  ofc_enqueue (hList, find_data) ;
 	  depth++ ;
@@ -837,7 +838,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_connectedway_io_FileSystem_listFiles
 	  else
 	    {
 	      if (ofc_tstrcmp (find_data->cFileName, TSTR("..")) != 0 &&
-		  ofc_tstrcmp (find_data->cFileName, TSTR(".")) != 0)
+		  ofc_tstrcmp (find_data->cFileName, TSTR(".")) != 0 &&
+                  !(find_data->dwFileAttributes & OFC_FILE_ATTRIBUTE_HIDDEN))
 		{
 		  ofc_enqueue (hList, find_data) ;
 		  depth++ ;
@@ -2611,7 +2613,8 @@ JNIEXPORT jobject Java_com_connectedway_io_FileSystem_findFile(JNIEnv *env, jobj
 	  (*env)->CallVoidMethod (env, objDir, midSetHandle, (jlong) list_handle) ;
 
 	  if (ofc_tstrcmp (find_data->cFileName, TSTR("..")) == 0 ||
-	      ofc_tstrcmp (find_data->cFileName, TSTR(".")) == 0)
+	      ofc_tstrcmp (find_data->cFileName, TSTR(".")) == 0 ||
+              (find_data->dwFileAttributes & OFC_FILE_ATTRIBUTE_HIDDEN))
 	    {
 	      ofc_free (find_data) ;
 	      find_data = OFC_NULL ;
@@ -2643,7 +2646,8 @@ JNIEXPORT jobject Java_com_connectedway_io_FileSystem_findFile(JNIEnv *env, jobj
       else
 	{
 	  if (ofc_tstrcmp (find_data->cFileName, TSTR("..")) == 0 ||
-	      ofc_tstrcmp (find_data->cFileName, TSTR(".")) == 0)
+	      ofc_tstrcmp (find_data->cFileName, TSTR(".")) == 0 ||
+              (find_data->dwFileAttributes & OFC_FILE_ATTRIBUTE_HIDDEN))
 	    {
 	      ofc_free (find_data) ;
 	      find_data = OFC_NULL ;
