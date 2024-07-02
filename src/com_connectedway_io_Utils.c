@@ -12,6 +12,7 @@
 #include "ofc/libc.h"
 #include "ofc/path.h"
 #include "ofc/handle.h"
+#include "ofc/process.h"
 
 #include "ofc_jni/com_connectedway_io_Utils.h"
 
@@ -294,3 +295,39 @@ OFC_HANDLE file_descriptor_get_handle (JNIEnv *env, jobject objFd)
   return (hFile) ;
 }
 
+#if defined(__ANDROID__)
+static JavaVM *g_jvm = OFC_NULL ;
+
+jint JNI_OnLoad(JavaVM *jvm, void *reerved)
+{
+  g_jvm = jvm;
+  return (JNI_VERSION_1_6);
+}
+
+void JNI_OnUnload(JavaVM *vm, void *reserved)
+{
+}
+
+OFC_VOID ofc_attach_java_thread(OFC_VOID)
+{
+  int status;
+#if defined(__APPLE__)
+  void *envx ;
+#else
+  JNIEnv *envx ;
+#endif
+
+  ofc_assert(g_jvm != OFC_NULL, "No Java VM to attach to\n");
+
+  status = (*g_jvm)->AttachCurrentThread (g_jvm, &envx, NULL);
+
+  ofc_assert(status == JNI_OK, "Could not attach java thread\n");
+}
+  
+OFC_VOID ofc_detach_java_thread(OFC_VOID)
+{
+  ofc_assert(g_jvm != OFC_NULL, "No Java VM to detach from\n");
+
+  (*g_jvm)->DetachCurrentThread(g_jvm);
+}
+#endif

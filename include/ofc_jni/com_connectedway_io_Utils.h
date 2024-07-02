@@ -30,5 +30,9 @@ jobject new_file_from_path (JNIEnv *env, OFC_LPCTSTR path) ;
 jobject new_uri (JNIEnv *env, OFC_LPCTSTR path) ;
 jobject new_fd (JNIEnv *env, jlong hFile) ;
 OFC_HANDLE file_descriptor_get_handle (JNIEnv *env, jobject objFd) ;
+#if defined(__ANDROID__)
+OFC_VOID ofc_attach_java_thread(OFC_VOID);
+OFC_VOID ofc_detach_java_thread(OFC_VOID);
+#endif
 #endif
 
