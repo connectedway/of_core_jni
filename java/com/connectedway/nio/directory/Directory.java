@@ -7,14 +7,14 @@ import java.io.FileNotFoundException;
 import java.lang.SecurityException;
 
 public class Directory {
-    static private FileSystem fs = FileSystem.getFileSystem() ;
+    static private final FileSystem fs = FileSystem.getFileSystem() ;
 
-    private File parent ;
+    private final File parent ;
     private long handle ;
 
     public Directory (File parent) {
 	this.parent = parent ;
-	this.handle = new Long(-1) ;
+	this.handle = (long) -1;
     }
 
     public File find () throws SecurityException, FileNotFoundException {
@@ -26,7 +26,7 @@ public class Directory {
     }
 
     private File getParent() {
-	return (parent) ;
+        return (parent) ;
     }
 
     public long getHandle() {
@@ -38,7 +38,7 @@ public class Directory {
     }
 
     public String getLastErrorString() {
-	return this.parent.getLastErrorString() ;
+	return File.getLastErrorString() ;
     }
 
 }

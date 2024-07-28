@@ -1,6 +1,5 @@
 package com.connectedway.io ;
 
-import com.connectedway.io.FileSystem ;
 import java.io.SyncFailedException ;
 import java.io.IOException ;
 
@@ -15,8 +14,8 @@ import java.io.IOException ;
  */
 public class FileDescriptor {
     
-    private long handle ;
-    private FileSystem fs = FileSystem.getFileSystem() ;
+    private final long handle ;
+    private final FileSystem fs = FileSystem.getFileSystem() ;
     /**
      * Create a Blue File Descriptor
      *

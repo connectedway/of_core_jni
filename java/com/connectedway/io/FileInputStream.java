@@ -18,9 +18,6 @@ import java.lang.SecurityException ;
 
 import java.nio.channels.FileChannel ;
 
-import com.connectedway.io.FileSystem ;
-import com.connectedway.io.FileDescriptor ;
-
 /**
  * A <code>BlueFileInputStream</code> obtains input bytes
  * from a file in a network aware file system. 
@@ -29,8 +26,8 @@ import com.connectedway.io.FileDescriptor ;
  */
 public class FileInputStream extends InputStream {
 
-    private FileDescriptor fd = null ;
-    private FileSystem fs = FileSystem.getFileSystem() ;
+    private FileDescriptor fd;
+    private final FileSystem fs = FileSystem.getFileSystem() ;
 
     /**
      * Creates a <code>FileInputStream</code> by opening a connection 
@@ -50,7 +47,7 @@ public class FileInputStream extends InputStream {
      * actual file, the file named by the <code>File</code>
      * object <code>file</code> in the file system.
      *
-     * @see java.io.FileInputStream#FileInputStream(File)
+     * @see java.io.FileInputStream#FileInputStream(java.io.File)
      */
     public FileInputStream (java.io.File file) 
 	throws FileNotFoundException, SecurityException {
@@ -63,7 +60,7 @@ public class FileInputStream extends InputStream {
      * <code>fdObj</code>, which represents an existing connection to an
      * actual file in the file system.
      *
-     * @see java.io.FileInputStream#FileInputStream(FileDescriptor)
+     * @see java.io.FileInputStream#FileInputStream(java.io.FileDescriptor)
      */
     public FileInputStream (FileDescriptor fd) 
 	throws FileNotFoundException {
@@ -87,17 +84,16 @@ public class FileInputStream extends InputStream {
      *
      * @see java.io.FileInputStream#read(byte[])
      */
-    public int read(byte b[]) throws IOException {
-
-	return read (b, 0, b.length) ;
+    public int read(byte[] b) throws IOException {
+        return fs.read(fd, b);
     }
     
     /**
-     * Reads a subarray as a sequence of bytes.
+     * Reads a sub-array as a sequence of bytes.
      *
      * @see java.io.FileInputStream (byte[], int, int)
      */
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
 	int ret ;
 	ret = fs.read (fd, b, off, len) ;
 	return ret ;

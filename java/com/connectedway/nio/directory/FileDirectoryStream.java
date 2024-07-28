@@ -1,44 +1,37 @@
 package com.connectedway.nio.directory;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.lang.InterruptedException;
 
 import java.lang.System;
 
 import com.connectedway.io.File;
-import com.connectedway.nio.directory.Directory;
 
 public class FileDirectoryStream {
 
-    private LinkedBlockingQueue<File> fileLinkedBlockingQueue = 
-	new LinkedBlockingQueue<File>();
+    private LinkedBlockingQueue<File> fileLinkedBlockingQueue =
+			new LinkedBlockingQueue<>();
     private FutureTask<Void> fileTask;
-    private DirectoryListener listener ;
+    private final DirectoryListener listener ;
     private State state ;
-    private File startDirectory;
-    protected Exception ex = null ;
-    protected Directory dir = null ;
+	protected Exception ex = null ;
+    protected Directory dir;
     private String lastError = "Success" ;
     private long expiration ;
 
-    public enum State { LOADING, FRESH } ;
+    public enum State { LOADING, FRESH }
 
-    public abstract interface DirectoryListener {
-	public abstract void onNotifyEvent () ;
+	public interface DirectoryListener {
+	void onNotifyEvent() ;
     }
 
     public FileDirectoryStream(File startDirectory,
 			       DirectoryListener listener)
     {
-        this.startDirectory = startDirectory;
-	this.dir = new Directory (startDirectory) ;
+		this.dir = new Directory (startDirectory) ;
 
 	this.listener = listener ;
 	this.expiration = System.currentTimeMillis() + 60000 ;
@@ -61,13 +54,10 @@ public class FileDirectoryStream {
     }
 
     private void startFileSearch(final File startDirectory) {
-	fileTask = new FutureTask<Void>(new Callable<Void>() {
-		@Override
-		public Void call() throws Exception {
-		    findFiles(startDirectory);
-		    return null;
-		}
-	    });
+	fileTask = new FutureTask<>(() -> {
+		findFiles(startDirectory);
+		return null;
+	});
 	start(fileTask);
     }
 

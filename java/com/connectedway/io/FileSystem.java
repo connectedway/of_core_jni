@@ -1,8 +1,6 @@
 package com.connectedway.io;
 
 import java.io.IOException ;
-import com.connectedway.io.Framework ;
-import com.connectedway.io.File ;
 
 import com.connectedway.nio.directory.Directory ;
 import java.io.FileNotFoundException ;
@@ -11,8 +9,6 @@ import java.lang.SecurityException ;
 /**
  * Package-private abstract class for the Blue Share CIFS
  * filesystem abstraction.
- *
- * @see java.io.FileSystem
  */
 public class FileSystem {
     /**
@@ -22,7 +18,7 @@ public class FileSystem {
 
     private FileSystem()
     {
-	/**
+	/*
 	 * Insure that the JNI library is loaded
 	 */
 	Framework.getFramework() ;
@@ -30,8 +26,6 @@ public class FileSystem {
 
     /**
      * Return the FileSystem object 
-     *
-     * @see java.io.FileSystem#getFileSystem()
      */
     public static FileSystem getFileSystem() {
 	if (ref == null)
@@ -47,8 +41,6 @@ public class FileSystem {
      * Return the local filesystem's name-separator character.  If the
      * platform name-separator is not a forward or backward slash, then
      * default to a backward slash.
-     *
-     * @see java.io.FileSystem#getSeparator()
      */
     public char getSeparator() {
 	char sep = java.io.File.separatorChar ;
@@ -61,8 +53,6 @@ public class FileSystem {
 
     /**
      * Return the local filesystem's path-separator character.
-     *
-     * @see java.io.FileSystem#getPathSeparator()
      */
     public char getPathSeparator() {
 	return java.io.File.pathSeparatorChar ;
@@ -71,16 +61,12 @@ public class FileSystem {
     /**
      * Convert the given pathname string to normal form.  If the string is
      * already in normal form then it is simply returned.
-     *
-     * @see java.io.FileSystem#normalize(String)
      */
     public native String normalize(String path) ;
 
     /**
      * Compute the length of this pathname string's prefix.  The pathname
      * string must be in normal form.
-     *
-     * @see java.io.FileSystem#prefixLength(String)
      */
     public native int prefixLength(String path) ;
 
@@ -88,8 +74,6 @@ public class FileSystem {
      * Resolve the child pathname string against the parent.
      * Both strings must be in normal form, and the result
      * will be in normal form.
-     *
-     * @see java.io.FileSystem#resolve(String, String)
      */
     public native String resolve(String parent, String child) ;
 
@@ -101,8 +85,6 @@ public class FileSystem {
      * argument in one of the two-argument File constructors is the empty
      * pathname.  In a network file system, there is no notion of default
      * parent.
-     *
-     * @see java.io.FileSystem#getDefaultParent()
      */
     public String getDefaultParent() {
 	return "" ;
@@ -110,8 +92,6 @@ public class FileSystem {
 
     /**
      * Blue Share supports URI directly so we do not need to convert.
-     *
-     * @see java.io.FileSystem#fromURIPath(String)
      */
     public String fromURIPath(String path) {
 	return (path) ;
@@ -121,23 +101,17 @@ public class FileSystem {
 
     /**
      * Tell whether or not the given abstract pathname is absolute.
-     *
-     * @see java.io.FileSystem#isAbsolute(File)
      */
     public native boolean isAbsolute(File f) ;
 
     /**
      * Resolve the given abstract pathname into absolute form.  Invoked by the
      * getAbsolutePath and getCanonicalPath methods in the File class.
-     *
-     * @see java.io.FileSystem#resolve(File)
      */
     public native String resolve(File f) ;
 
     /**
-     * Cananoicalize a path
-     *
-     * @see java.io.FileSystem#canonicalize(String)
+     * Canonicalize a path
      */
     public native String canonicalize(String path) throws IOException ;
 
@@ -149,14 +123,12 @@ public class FileSystem {
     public static final int BA_SHARE     = 0x10;
     public static final int BA_SERVER    = 0x20;
     public static final int BA_WORKGROUP = 0x40;
-    public static final int BA_BOOKMARK  = 0x80;
+    //public static final int BA_BOOKMARK  = 0x80;
 
     /**
      * Return the simple boolean attributes for the file or directory denoted
      * by the given abstract pathname, or zero if it does not exist or some
      * other I/O error occurs.
-     *
-     * @see java.io.FileSystem#getBooleanAttributes(File)
      */
     public native int getBooleanAttributes(File f) ;
 
@@ -169,17 +141,13 @@ public class FileSystem {
      * pathname may be accessed by this process.  The second argument specifies
      * which access, ACCESS_READ, ACCESS_WRITE or ACCESS_EXECUTE, to check.
      * Return false if access is denied or an I/O error occurs
-     *
-     * @see java.io.FileSystem#checkAccess(File, int)
      */
     public native boolean checkAccess(File f, int access) ;
 
     /**
      * Set on or off the access permission (to owner only or to all) to the file
      * or directory denoted by the given abstract pathname, based on the 
-     * parameters enable, access and oweronly.
-     *
-     * @see java.io.FileSystem#setPermission(File, int, boolean, boolean)
+     * parameters enable, access and owneronly.
      */
     public native boolean setPermission(File f, int access, 
 					boolean enable, boolean owneronly) ;
@@ -188,8 +156,6 @@ public class FileSystem {
      * Return the time at which the file or directory denoted by the given
      * abstract pathname was last modified, or zero if it does not exist or
      * some other I/O error occurs.
-     *
-     * @see java.io.FileSystem#getLastModifiedTime(File)
      */
     public native long getLastModifiedTime(File f) ;
 
@@ -197,8 +163,6 @@ public class FileSystem {
      * Return the length in bytes of the file denoted by the given abstract
      * pathname, or zero if it does not exist, is a directory, or some other
      * I/O error occurs.
-     *
-     * @see java.io.FileSystem#getLength(File)
      */
     public native long getLength(File f) ;
 
@@ -209,8 +173,6 @@ public class FileSystem {
      * <code>true</code> if the file was created and <code>false</code> if a
      * file or directory with the given pathname already exists.  Throw an
      * IOException if an I/O error occurs.
-     *
-     * @see java.io.FileSystem#createFileExclusively(String)
      */
     public native boolean createFileExclusively(String pathname)
         throws IOException ;
@@ -218,8 +180,6 @@ public class FileSystem {
     /**
      * Delete the file or directory denoted by the given abstract pathname,
      * returning <code>true</code> if and only if the operation succeeds.
-     *
-     * @see java.io.FileSystem#delete(File)
      */
     public native boolean delete(File f) ;
 
@@ -227,8 +187,6 @@ public class FileSystem {
      * List the elements of the directory denoted by the given abstract
      * pathname.  Return an array of strings naming the elements of the
      * directory if successful; otherwise, return <code>null</code>.
-     *
-     * @see java.io.FileSystem#list(File)
      */
     public native String[] list(File f) ;
     public native File[] listFiles(File f) ;
@@ -236,8 +194,6 @@ public class FileSystem {
     /**
      * Create a new directory denoted by the given abstract pathname,
      * returning <code>true</code> if and only if the operation succeeds.
-     *
-     * @see java.io.FileSystem#createDirectory(File)
      */
     public native boolean createDirectory(File f) ;
 
@@ -245,8 +201,6 @@ public class FileSystem {
      * Rename the file or directory denoted by the first abstract pathname to
      * the second abstract pathname, returning <code>true</code> if and only if
      * the operation succeeds.  Both files need to be in the same share.
-     *
-     * @see java.io.FileSystem#rename (File, File) ;
      */
     public native boolean rename(File f1, File f2) ;
 
@@ -254,8 +208,6 @@ public class FileSystem {
      * Set the last-modified time of the file or directory denoted by the
      * given abstract pathname, returning <code>true</code> if and only if the
      * operation succeeds.
-     *
-     * @see java.io.FileSystem#setLastModifiedTime(File, long)
      */
     public native boolean setLastModifiedTime(File f, long time) ;
 
@@ -263,8 +215,6 @@ public class FileSystem {
      * Mark the file or directory denoted by the given abstract pathname as
      * read-only, returning <code>true</code> if and only if the operation
      * succeeds.
-     *
-     * @see java.io.FileSystem#setReadOnly(File)
      */
     public native boolean setReadOnly(File f) ;
 
@@ -272,8 +222,6 @@ public class FileSystem {
 
     /**
      * List the available filesystem roots.
-     *
-     * @see java.io.FileSystem#listRoots()
      */
     public native File[] listRoots() ;
 
@@ -284,8 +232,6 @@ public class FileSystem {
 
     /**
      * get the space available on a file system
-     *
-     * @see java.io.FileSystem#getSpace(File, int)
      */
     public native long getSpace(File f, int t) ;
 
@@ -295,10 +241,7 @@ public class FileSystem {
 	
     public boolean isWorkgroup (File f) {
 	boolean ret ;
-
-	ret = false ;
-	if ((getBooleanAttributes(f) & FileSystem.BA_WORKGROUP) != 0)
-	    ret = true ;
+        ret = (getBooleanAttributes(f) & FileSystem.BA_WORKGROUP) != 0;
 	return ret ;
     }
 
@@ -308,10 +251,7 @@ public class FileSystem {
 
     public boolean isServer (File f) {
 	boolean ret ;
-
-	ret = false ;
-	if ((getBooleanAttributes(f) & FileSystem.BA_SERVER) != 0)
-	    ret = true ;
+        ret = (getBooleanAttributes(f) & FileSystem.BA_SERVER) != 0;
 	return ret ;
     }
 
@@ -321,10 +261,7 @@ public class FileSystem {
 
     public boolean isShare (File f) {
 	boolean ret ;
-
-	ret = false ;
-	if ((getBooleanAttributes(f) & FileSystem.BA_SHARE) != 0)
-	    ret = true ;
+        ret = (getBooleanAttributes(f) & FileSystem.BA_SHARE) != 0;
 	return ret ;
     }
 
@@ -336,8 +273,6 @@ public class FileSystem {
 
     /**
      * Compare two abstract pathnames lexicographically.
-     *
-     * @see java.io.FileSystem#compare(File, File)
      */
     public int compare(File f1, File f2) {
 	return f1.getPath().compareTo(f2.getPath());
@@ -345,8 +280,6 @@ public class FileSystem {
 
     /**
      * Compute the hash code of an abstract pathname.
-     *
-     * @see java.io.FileSystem#hashCode(File)
      */
     public int hashCode(File f) {
 	return f.getPath().hashCode() ^ 1234321;
@@ -363,11 +296,15 @@ public class FileSystem {
 	throws FileNotFoundException, SecurityException ;
 
     public native int read (FileDescriptor fd) throws IOException ;
-    public native int read (FileDescriptor fd, byte b[], int off, int len)
+    public native int read (FileDescriptor fd, byte[] b, int off, int len)
+	throws IOException ;
+    public native int read (FileDescriptor fd, byte[] b)
 	throws IOException ;
     public native void write (FileDescriptor fd, int b) throws IOException ;
-    public native void write (FileDescriptor fd, byte b[], int off, 
-			      int len) throws IOException ;
+    public native void write (FileDescriptor fd, byte[] b, int off,
+                              int len) throws IOException ;
+    public native void write (FileDescriptor fd, byte[] b)
+        throws IOException ;
     public native void seteof (FileDescriptor fd, long pos) 
 	throws IOException ;
     public native long skip (FileDescriptor fd, long n) 

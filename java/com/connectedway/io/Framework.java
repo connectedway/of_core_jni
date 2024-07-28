@@ -6,7 +6,33 @@ import java.util.UUID ;
 
 import java.io.Serializable ;
 import java.net.InetAddress ;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+    
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+
+import android.util.Log;
+import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyGenParameterSpec;
+
+import com.connectedway.io.File;
 /**
  * This class manages the configuration and initialization of the Blue 
  * Share components.
@@ -209,10 +235,12 @@ public class Framework implements Serializable
      * Load configuration from a file
      */
     public native void load(File file) ;
+
     /**
      * Store configuration to a file
      */
     public native void save(File file) ;
+
     /**
      * Set the Hostname, Workgroup, and description for the current
      * node
@@ -250,6 +278,11 @@ public class Framework implements Serializable
      * then individual interfaces must be manually configured.
      */
     public native void setInterfaceDiscovery(boolean on) ;
+    /**
+     * Set the Network Handle for the JNI code.  After API 31, the NDK
+     * provides a call for this but until then, we need to pass it in.
+     */
+    public native void setNetworkHandle(long handle);
     /**
      * Get the auto discovery state
      */
@@ -314,4 +347,227 @@ public class Framework implements Serializable
 	getFramework().init() ;
     }
 
+    private File configFile;
+    private File configDir;
+    private SecretKey configKey;
+    static byte[] configIV ;
+    private final String CONFIG_KEY_ALIAS = "_com.spiritcloud.app_config";
+
+    public native byte[] getConfig() ;
+    public native void putConfig(byte[] plainConfig);
+    public native void setConfigPath(String path);
+
+    public File getConfigDir() {
+        return (this.configDir);
+    }
+
+    public void setConfigFile(File configFile) {
+        setConfigPath(configFile.getPath());
+        this.configFile = configFile;
+        this.configDir = configFile.getParentFile();
+
+        File ivFile = new File (this.configDir, "config.iv");
+        FileInputStream inputStreamIv;
+        this.configIV = new byte[(int)ivFile.length()];
+        try {
+            inputStreamIv = new FileInputStream(ivFile);
+            inputStreamIv.read(this.configIV);
+            inputStreamIv.close();
+        } catch (IOException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Iv File Not Found");
+        }
+    }
+
+    public Boolean configExists() {
+        return (this.configFile.exists());
+    }
+
+    public void setConfigKey(SecretKey configKey) {
+        this.configKey = configKey;
+    }
+    
+    public void loadConfigFile()
+    throws IOException {
+        GCMParameterSpec gcmParameterSpec =
+            new GCMParameterSpec(128, this.configIV);
+        Cipher configCipher;
+        try {
+            configCipher =
+                Cipher.getInstance("AES/GCM/NoPadding");
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Unable to get AES Cipher");
+            throw new IOException();
+        }
+
+        try {
+            configCipher.init(Cipher.DECRYPT_MODE, this.configKey,
+                              gcmParameterSpec);
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Unable to Initialize AES Cipher");
+            throw new IOException();
+        }
+        FileInputStream inputStreamConfig;
+        try {
+            inputStreamConfig = new FileInputStream(configFile);
+        } catch (FileNotFoundException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Config File Not Found");
+            throw new IOException();
+        }
+        byte[] secretConfig = new byte[(int)configFile.length()];
+        try {
+            inputStreamConfig.read(secretConfig);
+            inputStreamConfig.close();
+        } catch (IOException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Read from Config File");
+            throw new IOException();
+        }
+            
+        byte[] plainConfig;
+        try {
+            plainConfig = configCipher.doFinal(secretConfig);
+            putConfig(plainConfig);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Decrypt Config File, Trying plain text");
+            putConfig(secretConfig);
+        }
+    }
+
+    public void saveConfigFile()
+    throws IOException {
+        Cipher configCipher;
+        boolean cipher_init = false;
+        try {
+            configCipher = Cipher.getInstance("AES/GCM/NoPadding");
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Unable to get AES Cipher");
+            throw new IOException();
+        }
+        while (!cipher_init) {
+            try {
+                configCipher.init(Cipher.ENCRYPT_MODE, this.configKey);
+                cipher_init = true;
+            } catch (InvalidKeyException e) {
+                Log.e(Framework.class.getSimpleName(),
+                      "Unable to Initialize AES Cipher or save.  Creating new Key");
+                newConfigKey();
+            }
+        }
+
+        configIV = configCipher.getIV();
+        File ivFile = new File(this.configDir, "config.iv");
+        FileOutputStream ivOutputStream ;
+        try {
+            ivOutputStream = new FileOutputStream (ivFile);
+        } catch (IOException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Open IV File");
+            throw new IOException();
+        }
+
+        try {
+            ivOutputStream.write(this.configIV);
+            ivOutputStream.close();
+        } catch (IOException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Write to IV File");
+            throw new IOException();
+        }
+
+        byte[] plainConfig = getConfig() ;
+        byte[] secretConfig;
+        try {
+            secretConfig = configCipher.doFinal(plainConfig);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Encrypt Config File");
+            throw new IOException();
+        }
+
+        FileOutputStream outputStreamConfig;
+        try {
+            outputStreamConfig =  new FileOutputStream (configFile);
+        } catch (FileNotFoundException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Config File Not Found");
+            throw new IOException();
+        }
+        try {
+            outputStreamConfig.write(secretConfig);
+            outputStreamConfig.close();
+        } catch (IOException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Couldn't Write to Config File");
+            throw new IOException();
+        }
+    }
+
+    public void getConfigKey() {
+        KeyStore keyStore;
+        try {
+            keyStore = KeyStore.getInstance("AndroidKeyStore");
+        } catch (KeyStoreException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Could Not Android Key Store Instance");
+            return ;
+        }
+            
+        try {
+            keyStore.load(null);
+        } catch (CertificateException |
+                 IOException |
+                 NoSuchAlgorithmException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Could Not Load Android Key Store");
+            return ;
+        }
+
+        try {
+            this.configKey =
+                (SecretKey) keyStore.getKey(CONFIG_KEY_ALIAS, null);
+        } catch (KeyStoreException |
+                 NoSuchAlgorithmException |
+                 UnrecoverableKeyException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Could Not Get Config Key");
+            return ;
+        }
+    }
+
+    public void newConfigKey() {
+        KeyGenerator keyGenerator ;
+        try {
+            keyGenerator =
+                KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,
+                                         "AndroidKeyStore");
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Unable to get AES Cipher");
+            return ;
+        }
+
+        KeyGenParameterSpec keySpec =
+            new KeyGenParameterSpec.Builder("_com.spiritcloud.app_config",
+                                            KeyProperties.PURPOSE_ENCRYPT |
+                                            KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .build();
+        try {
+            keyGenerator.init(keySpec);
+        } catch (InvalidAlgorithmParameterException e) {
+            Log.e(Framework.class.getSimpleName(),
+                  "Could Not Intialize Config Key Generator");
+            return ;
+        }
+
+        this.configKey = keyGenerator.generateKey();
+    }
 }
+

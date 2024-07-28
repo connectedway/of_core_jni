@@ -8,9 +8,7 @@ import java.io.DataOutput ;
 import java.io.DataInput ;
 import java.io.Closeable ;
 import java.io.DataInputStream ;
-
-import com.connectedway.io.FileSystem ;
-import com.connectedway.io.FileDescriptor ;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Instances of this class support both reading and writing to a
@@ -20,8 +18,8 @@ import com.connectedway.io.FileDescriptor ;
  */
 public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 
-    private FileDescriptor fd ;
-    private FileSystem fs = FileSystem.getFileSystem() ;
+    private FileDescriptor fd;
+    private final FileSystem fs = FileSystem.getFileSystem() ;
     
     /**
      * Creates a random access file stream to read from, and optionally
@@ -44,9 +42,9 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 
     /**
      * Creates a random access file stream to read from, and optionally to
-     * write to, the file specified by the {@link BlueFile} argument. 
+     * write to, the file specified by the {@link File} argument.
      *
-     * @see java.io.RandomAccessFile#RandomAccessFile(File, String)
+     * @see java.io.RandomAccessFile#RandomAccessFile(java.io.File, String)
      */
     public RandomAccessFile (File file, String mode) 
 	throws FileNotFoundException {
@@ -86,7 +84,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#read(byte[], int, int)
      */
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
         return fs.read(fd, b, off, len) ;
     }
     
@@ -96,8 +94,8 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#read(byte[])
      */
-    public int read(byte b[]) throws IOException {
-        return fs.read(fd, b, 0, b.length) ;
+    public int read(byte[] b) throws IOException {
+        return fs.read(fd, b);
     }
     
     /**
@@ -106,7 +104,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#readFully(byte[])
      */
-    public void readFully(byte b[]) throws IOException {
+    public void readFully(byte[] b) throws IOException {
         readFully(b, 0, b.length) ;
     }
     
@@ -116,7 +114,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#readFully(byte[], int, int)
      */
-    public void readFully (byte b[], int off, int len) throws IOException {
+    public void readFully (byte[] b, int off, int len) throws IOException {
 	int i = 0 ;
 	do {
 	    int count = this.read (b, off + i, len - i) ;
@@ -162,8 +160,8 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#write(byte[])
      */
-    public void write (byte b[]) throws IOException {
-	fs.write (fd, b, 0, b.length) ;
+    public void write (byte[] b) throws IOException {
+        fs.write(fd, b);
     }
     
     /**
@@ -172,7 +170,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#write(byte[], int, int)
      */
-    public void write (byte b[], int off, int len) throws IOException {
+    public void write (byte[] b, int off, int len) throws IOException {
 	fs.write (fd, b, off, len) ;
     }
     
@@ -274,7 +272,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	int ch2 = this.read();
 	if ((ch1 | ch2) < 0)
 	    throw new EOFException();
-	return (short)((ch1 << 8) + (ch2 << 0));
+	return (short)((ch1 << 8) + (ch2));
     }
     
     /**
@@ -287,7 +285,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	int ch2 = this.read();
 	if ((ch1 | ch2) < 0)
 	    throw new EOFException();
-	return (ch1 << 8) + (ch2 << 0);
+	return (ch1 << 8) + (ch2);
     }
     
     /**
@@ -300,7 +298,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	int ch2 = this.read();
 	if ((ch1 | ch2) < 0)
 	    throw new EOFException();
-	return (char)((ch1 << 8) + (ch2 << 0));
+	return (char)((ch1 << 8) + (ch2));
     }
     
     /**
@@ -315,7 +313,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	int ch4 = this.read();
 	if ((ch1 | ch2 | ch3 | ch4) < 0)
 	    throw new EOFException();
-	return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+	return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4));
     }
     
     /**
@@ -351,7 +349,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @see java.io.RandomAccessFile#readLine()
      */
     public String readLine() throws IOException {
-	StringBuffer input = new StringBuffer();
+	StringBuilder input = new StringBuilder();
 	int c = -1;
 	boolean eol = false;
 
@@ -414,7 +412,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      */
     public void writeShort (int v) throws IOException {
 	write((v >>> 8) & 0xFF);
-	write((v >>> 0) & 0xFF);
+	write((v) & 0xFF);
     }
     
     /**
@@ -425,7 +423,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      */
     public void writeChar (int v) throws IOException {
 	write((v >>> 8) & 0xFF);
-	write((v >>> 0) & 0xFF);
+	write((v) & 0xFF);
     }
     
     /**
@@ -437,7 +435,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	write((v >>> 24) & 0xFF);
 	write((v >>> 16) & 0xFF);
 	write((v >>>  8) & 0xFF);
-	write((v >>>  0) & 0xFF);
+	write((v) & 0xFF);
     }
     
     /**
@@ -453,7 +451,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	write((int)(v >>> 24) & 0xFF);
 	write((int)(v >>> 16) & 0xFF);
 	write((int)(v >>>  8) & 0xFF);
-	write((int)(v >>>  0) & 0xFF);
+	write((int)(v) & 0xFF);
     }
 
     /**
@@ -503,7 +501,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	s.getChars(0, clen, c, 0);
 	for (int i = 0, j = 0; i < clen; i++) {
 	    b[j++] = (byte)(c[i] >>> 8);
-	    b[j++] = (byte)(c[i] >>> 0);
+	    b[j++] = (byte)(c[i]);
 	}
 	fs.write(fd, b, 0, blen);
     }
@@ -514,9 +512,9 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @see java.io.RandomAccessFile#writeUTF(String)
      */
     public void writeUTF(String s) throws IOException {
-	byte b[] ;
+	byte[] b;
 
-	b = s.getBytes("UTF-8") ;
+	b = s.getBytes(StandardCharsets.UTF_8) ;
 	fs.write (fd, b, 0, b.length) ;
     }
 

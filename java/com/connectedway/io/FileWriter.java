@@ -4,9 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException ;
 import java.io.OutputStreamWriter ;
 
-import com.connectedway.io.FileOutputStream ;
-import com.connectedway.io.FileDescriptor ;
-
 /**
  * Convenience class for writing character files.
  * 
@@ -36,7 +33,7 @@ public class FileWriter extends OutputStreamWriter {
     /**
      * Constructs a FileWriter object given a BlueFile object.
      *
-     * @see java.io.FileWriter#FileWriter(File)
+     * @see java.io.FileWriter#FileWriter(java.io.File)
      */
     public FileWriter (java.io.File file) throws IOException {
 	super (new FileOutputStream (file)) ;
@@ -45,7 +42,7 @@ public class FileWriter extends OutputStreamWriter {
     /**
      * Constructs a FileWriter object given a BlueFile object. 
      *
-     * @see java.io.FileWriter#FileWriter(File)
+     * @see java.io.FileWriter#FileWriter(java.io.File)
      */
     public FileWriter (java.io.File file, boolean append) throws IOException {
 	super (new FileOutputStream (file, append)) ;
@@ -53,9 +50,9 @@ public class FileWriter extends OutputStreamWriter {
     
     /**
      * Constructs a FileWriter object associated with a file descriptor.
-     * @throws FileNotFoundException 
+     * @throws FileNotFoundException File is not found
      *
-     * @see java.io.FileWriter#FileWriter(FileDescriptor)
+     * @see java.io.FileWriter#FileWriter(java.io.FileDescriptor)
      */
     public FileWriter (FileDescriptor fd) throws FileNotFoundException {
 	super (new FileOutputStream (fd)) ;

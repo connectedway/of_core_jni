@@ -4,9 +4,6 @@ import java.io.* ;
 import java.lang.SecurityException ;
 import java.nio.channels.FileChannel ;
 
-import com.connectedway.io.FileSystem ;
-import com.connectedway.io.FileDescriptor ;
-
 /**
  * A file output stream is an output stream for writing data to a
  * <code>BlueFile</code> or to a <code>BlueFileDescriptor</code>. 
@@ -15,8 +12,8 @@ import com.connectedway.io.FileDescriptor ;
  */
 public class FileOutputStream extends OutputStream {
 
-    private FileDescriptor fd = null ;
-    private FileSystem fs = FileSystem.getFileSystem() ;
+    private FileDescriptor fd;
+    private final FileSystem fs = FileSystem.getFileSystem() ;
     /**
      * Creates an output file stream to write to the file with the
      * specified name.
@@ -58,7 +55,7 @@ public class FileOutputStream extends OutputStream {
      * Creates a file output stream to write to the file represented by
      * the specified <code>BlueFile</code> object. 
      *
-     * @see java.io.FileOutputStream#FileOutputStream(File, boolean)
+     * @see java.io.FileOutputStream#FileOutputStream(java.io.File, boolean)
      */
     public FileOutputStream (java.io.File file, boolean append) 
 	throws FileNotFoundException, SecurityException {
@@ -72,7 +69,7 @@ public class FileOutputStream extends OutputStream {
      * Creates an output file stream to write to the specified file
      * descriptor.
      *
-     * @see java.io.FileOutputStream#FileOutputStream(FileDescriptor)
+     * @see java.io.FileOutputStream#FileOutputStream(java.io.FileDescriptor)
      */
     public FileOutputStream (FileDescriptor fd) 
 	throws FileNotFoundException {
@@ -95,8 +92,8 @@ public class FileOutputStream extends OutputStream {
      *
      * @see java.io.FileOutputStream#write(byte[])
      */
-    public void write (byte b[]) throws IOException {
-	write (b, 0, b.length) ;
+    public void write (byte[] b) throws IOException {
+        fs.write(fd, b);
     }
     
     /**
@@ -105,7 +102,7 @@ public class FileOutputStream extends OutputStream {
      *
      * @see java.io.FileOutputStream#write(byte[], int, int)
      */
-    public void write (byte b[], int off, int len) throws IOException {
+    public void write (byte[] b, int off, int len) throws IOException {
 	fs.write (fd, b, off, len) ;
     }
     

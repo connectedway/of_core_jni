@@ -1,5 +1,7 @@
 package com.connectedway.io;
 
+import androidx.annotation.NonNull;
+
 import java.io.IOException;
 import java.io.FilenameFilter;
 import java.io.FileFilter;
@@ -9,8 +11,6 @@ import java.lang.NullPointerException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import com.connectedway.io.FileSystem;
 
 /**
  * A network aware representation of a file and directory pathnames. These files
@@ -89,7 +89,7 @@ public class File extends java.io.File {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String pathname;
+	private final String pathname;
         private boolean attributesset ;
         private int attributes ;
         private boolean sizeset ;
@@ -100,7 +100,7 @@ public class File extends java.io.File {
 	/**
 	 * The FileSystem object representing the platform's local file system.
 	 */
-	static private FileSystem fs = FileSystem.getFileSystem();
+	static private final FileSystem fs = FileSystem.getFileSystem();
 
 	/**
 	 * Creates a new <code>File</code> instance by converting the given
@@ -127,7 +127,7 @@ public class File extends java.io.File {
 	 * 
 	 * <p>
 	 * If <code>parent</code> is <code>null</code> or empty then the new
-	 * <code>File</code> instance is created as if it were invokied by the
+	 * <code>File</code> instance is created as if it were invoked by the
 	 * single-argument <code>File</code> constructor on the given
 	 * <code>child</code> pathname string.
 	 * 
@@ -154,7 +154,7 @@ public class File extends java.io.File {
 	 * Creates a new <code>File</code> instance from a parent abstract
 	 * pathname and a child pathname string.
 	 * 
-	 * @see java.io.File#File(File, String)
+	 * @see java.io.File#File(java.io.File, String)
 	 */
 	public File(File parent, String child) throws NullPointerException {
 		super("");
@@ -275,6 +275,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getName()
 	 */
+	@NonNull
 	public String getName() {
 		return pathname.substring(pathname.lastIndexOf(java.io.File.separatorChar) + 1);
 	}
@@ -322,6 +323,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getPath()
 	 */
+	@NonNull
 	public String getPath() {
 		return pathname;
 	}
@@ -340,6 +342,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getAbsolutePath()
 	 */
+	@NonNull
 	public String getAbsolutePath() {
 		return fs.resolve(this);
 	}
@@ -349,6 +352,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getAbsoluteFile()
 	 */
+	@NonNull
 	public File getAbsoluteFile() {
 		return new File(fs.resolve(this));
 	}
@@ -358,6 +362,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getCanonicalPath()
 	 */
+	@NonNull
 	public String getCanonicalPath() throws IOException {
 		return fs.canonicalize(fs.resolve(this));
 	}
@@ -367,6 +372,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#getCanonicalFile()
 	 */
+	@NonNull
 	public File getCanonicalFile() throws IOException {
 		return new File(fs.canonicalize(fs.resolve(this)));
 	}
@@ -377,6 +383,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#toURI()
 	 */
+	@NonNull
 	public URI toURI() {
 		URI uri;
 		String prefix ;
@@ -391,7 +398,7 @@ public class File extends java.io.File {
 		} catch (URISyntaxException except) {
 			/*
 			 * paths that have been normalized through the FileSystem should
-			 * not have any URI syntaxes in them.
+			 * not have any URI syntax in them.
 			 */
 			throw new Error(except);
 		}
@@ -431,10 +438,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_EXISTS) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_EXISTS) != 0;
 	    return ret;
 	}
 
@@ -450,9 +454,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_DIRECTORY) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_DIRECTORY) != 0;
 	    return ret;
 	}
 
@@ -467,9 +469,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_WORKGROUP) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_WORKGROUP) != 0;
 	    return ret;
 	}
 
@@ -484,10 +484,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_SERVER) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_SERVER) != 0;
 	    return ret;
 	}
 
@@ -502,9 +499,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_SHARE) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_SHARE) != 0;
 	    return ret;
 	}
 
@@ -521,9 +516,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_REGULAR) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_REGULAR) != 0;
 	    return ret;
 	}
 
@@ -539,10 +532,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-			    
-	    ret = false;
-	    if ((this.attributes & FileSystem.BA_HIDDEN) != 0)
-		ret = true;
+		ret = (this.attributes & FileSystem.BA_HIDDEN) != 0;
 	    return ret;
 	}
 
@@ -637,14 +627,14 @@ public class File extends java.io.File {
 	 */
 	public String[] list(FilenameFilter filter) {
 		String[] all;
-		ArrayList<String> filtered = new ArrayList<String>();
+		ArrayList<String> filtered = new ArrayList<>();
 
 		all = fs.list(this);
-		for (int i = 0; i < all.length; i++) {
-			if (filter.accept(this, all[i]))
-				filtered.add(all[i]);
+		for (String s : all) {
+			if (filter.accept(this, s))
+				filtered.add(s);
 		}
-		return (String[]) filtered.toArray(new String[filtered.size()]);
+		return (String[]) filtered.toArray(new String[0]);
 	}
 
 	/**
@@ -666,17 +656,17 @@ public class File extends java.io.File {
 	 */
 	public File[] listFiles(FilenameFilter filter) {
 		String[] all;
-		ArrayList<File> filtered = new ArrayList<File>();
+		ArrayList<File> filtered = new ArrayList<>();
 		File f;
 
 		all = fs.list(this);
-		for (int i = 0; i < all.length; i++) {
-			if (filter.accept(this, all[i])) {
-				f = new File(this, all[i]);
+		for (String s : all) {
+			if (filter.accept(this, s)) {
+				f = new File(this, s);
 				filtered.add(f);
 			}
 		}
-		return (File[]) filtered.toArray(new File[filtered.size()]);
+		return (File[]) filtered.toArray(new File[0]);
 	}
 
 	/**
@@ -688,16 +678,16 @@ public class File extends java.io.File {
 	 */
 	public File[] listFiles(FileFilter filter) {
 		String[] all;
-		ArrayList<File> filtered = new ArrayList<File>();
+		ArrayList<File> filtered = new ArrayList<>();
 		File test;
 
 		all = fs.list(this);
-		for (int i = 0; i < all.length; i++) {
-			test = new File(this, all[i]);
+		for (String s : all) {
+			test = new File(this, s);
 			if (filter.accept(test))
 				filtered.add(test);
 		}
-		return (File[]) filtered.toArray(new File[filtered.size()]);
+		return (File[]) filtered.toArray(new File[0]);
 	}
 
 	/**
@@ -715,6 +705,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#mkdirs()
 	 */
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public boolean mkdirs() {
 
 		boolean ret = false;
@@ -732,7 +723,7 @@ public class File extends java.io.File {
 	/**
 	 * Renames the file denoted by this abstract pathname.
 	 * 
-	 * @see java.io.File#renameTo(File)
+	 * @see java.io.File#renameTo(java.io.File)
 	 */
 	public boolean renameTo(File dest) {
 		return fs.rename(this, dest);
@@ -839,6 +830,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#listRoots()
 	 */
+	@NonNull
 	public static File[] listRoots() {
 		return fs.listRoots();
 	}
@@ -876,7 +868,7 @@ public class File extends java.io.File {
 	/**
 	 * Compares two abstract pathnames lexicographically.
 	 * 
-	 * @see java.io.File#compareTo(File)
+	 * @see java.io.File#compareTo(java.io.File)
 	 */
 	public int compareTo(File pathname) {
 		return fs.compare(this, pathname);
@@ -887,11 +879,14 @@ public class File extends java.io.File {
 	 * Creates a new empty file in the specified directory, using the given
 	 * prefix and suffix strings to generate its name.
 	 * 
-	 * @see java.io.File#createTempFile(String, String, File)
+	 * @see java.io.File#createTempFile(String, String, java.io.File)
 	 */
 	public static File createTempFile(String prefix, String suffix,
 			File directory) throws IOException {
-		return File.createTempFile(prefix, suffix, directory);
+            java.io.File jdir = new java.io.File(directory.toString());
+            java.io.File tfile =
+                java.io.File.createTempFile(prefix, suffix, jdir);
+            return new File(tfile);
 	}
 
 	/**
@@ -900,9 +895,11 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#createTempFile(String, String)
 	 */
-	public static File createTempFile(String prefix, String suffix)
+	@NonNull
+	public static File createTempFile(@NonNull String prefix, String suffix)
 			throws IOException {
-		return File.createTempFile(prefix, suffix);
+            java.io.File tfile = java.io.File.createTempFile(prefix, suffix);
+            return new File(tfile);
 	}
 
 	/**
@@ -914,7 +911,7 @@ public class File extends java.io.File {
 		boolean ret;
 
 		ret = false;
-		if ((obj != null) && (obj instanceof File)) {
+		if ((obj instanceof File)) {
 		    ret = (fs.compare(this, (File) obj) == 0);
 		}
 		return ret;
@@ -934,6 +931,7 @@ public class File extends java.io.File {
 	 * 
 	 * @see java.io.File#toString()
 	 */
+	@NonNull
 	public String toString() {
 		return getPath();
 	}
