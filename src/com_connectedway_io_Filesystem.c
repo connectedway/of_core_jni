@@ -1423,24 +1423,21 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   jiBytesRead = 0 ;
   jiLen = (*env)->GetArrayLength(env, arrayB);
 
-  for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
+  lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
+  bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
+
+  if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
+                   OFC_HANDLE_NULL) == OFC_FALSE)
+
     {
-      lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
-      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
-
-      if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
-			OFC_HANDLE_NULL) == OFC_FALSE)
-
-	{
-	  nRead = 0 ;
-	  eof = 1 ;
-	  if (OfcGetLastError() != OFC_ERROR_HANDLE_EOF) 
-	    throwio(env) ;
-	}
-      jiBytesRead += nRead ;
-      jiWorkingOffset += nRead ;
-      jiLen -= nRead ;
+      nRead = 0 ;
+      eof = 1 ;
+      if (OfcGetLastError() != OFC_ERROR_HANDLE_EOF) 
+        throwio(env) ;
     }
+  jiBytesRead += nRead ;
+  jiWorkingOffset += nRead ;
+  jiLen -= nRead ;
 
   (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
 
@@ -1478,24 +1475,21 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   jiWorkingOffset = jiOffset ;
   jiBytesRead = 0 ;
 
-  for (eof = OFC_FALSE ; !eof && jiLen > 0 ; )
+  lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
+  bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
+
+  if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
+                   OFC_HANDLE_NULL) == OFC_FALSE)
+
     {
-      lpcBuffer = (OFC_CHAR *) jbBuffer + jiWorkingOffset ;
-      bsizeBuffer = OFC_MIN(jiLen, OFC_MAX_IO) ;
-
-      if (OfcReadFile (hFile, lpcBuffer, (OFC_DWORD) bsizeBuffer, &nRead, 
-			OFC_HANDLE_NULL) == OFC_FALSE)
-
-	{
-	  nRead = 0 ;
-	  eof = 1 ;
-	  if (OfcGetLastError() != OFC_ERROR_HANDLE_EOF) 
-	    throwio(env) ;
-	}
-      jiBytesRead += nRead ;
-      jiWorkingOffset += nRead ;
-      jiLen -= nRead ;
+      nRead = 0 ;
+      eof = 1 ;
+      if (OfcGetLastError() != OFC_ERROR_HANDLE_EOF) 
+        throwio(env) ;
     }
+  jiBytesRead += nRead ;
+  jiWorkingOffset += nRead ;
+  jiLen -= nRead ;
 
   (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
 
