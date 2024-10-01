@@ -1344,8 +1344,11 @@ JNIEXPORT jobject JNICALL Java_com_connectedway_io_FileSystem_open
       objFd = NULL ;
 
       dwLastError = OfcGetLastError() ;
+      ofc_log(OFC_LOG_WARN, "Coul Not Open %S, Last Error %d\n", tstrPathName, dwLastError);
+
       if (dwLastError == OFC_ERROR_ACCESS_DENIED ||
-	  dwLastError == OFC_ERROR_INVALID_PASSWORD)
+	  dwLastError == OFC_ERROR_INVALID_PASSWORD ||
+          dwLastError == OFC_ERROR_LOGON_FAILURE)
 	newExcCls = (*env)->FindClass(env, "java/lang/SecurityException");
       else
 	{
