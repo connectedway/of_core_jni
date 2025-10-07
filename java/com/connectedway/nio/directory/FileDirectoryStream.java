@@ -37,11 +37,11 @@ public class FileDirectoryStream {
 	this.expiration = System.currentTimeMillis() + 60000 ;
 	state = State.LOADING ;
 	//
-	// startFileSearch spawns a thread that will build up the 
+	// startFileSearch spawns a thread that will build up the
 	// fileLinkedBlockingQueue.  Asynchronous to this thread
 	// we'll have an iterator to pull things off the queue
 	//
-        startFileSearch(startDirectory);	
+        startFileSearch(startDirectory);
     }
 
     public boolean expired() {
@@ -98,7 +98,8 @@ public class FileDirectoryStream {
     }
 
     private void start(FutureTask<Void> futureTask) {
-	new Thread(futureTask).start() ;
+	Thread thread = new Thread(futureTask, "FileDirectoryStream-Worker");
+	thread.start();
     }
 
     public File[] getListing() throws SecurityException, FileNotFoundException {
@@ -114,7 +115,7 @@ public class FileDirectoryStream {
 	} catch (InterruptedException ex) {
 	    // ignore
 	}
-	return fileLinkedBlockingQueue.toArray(new File[0]) ;
+	return fileLinkedBlockingQueue.toArray(new File[0]);
     }
 
     public State getState() {
