@@ -1337,7 +1337,7 @@ JNIEXPORT jobject JNICALL Java_com_connectedway_io_FileSystem_open
   hFile = OfcCreateFileW (tstrPathName, dwAccess, dwShare,
 			   OFC_NULL, dwCreate,
 			   OFC_FILE_ATTRIBUTE_NORMAL, OFC_HANDLE_NULL) ;
-  
+
   if (hFile == OFC_INVALID_HANDLE_VALUE)
     {
       jclass newExcCls ;
@@ -1828,11 +1828,12 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   wait_set = ofc_waitset_create();
   buffer_list = ofc_queue_create();
 
-  file_offset = jiOffset ;
-  buffer_offset = 0;
+  /* Get current file position */
+  file_offset = OfcSetFilePointer(hFile, 0, OFC_NULL, OFC_FILE_CURRENT);
+  buffer_offset = jiOffset;
   eof = OFC_FALSE;
   pending = 0;
-  
+
   for (i = 0; i < NUM_FILE_BUFFERS && !eof && buffer_offset < jiLen; i++)
     {
       /*
@@ -1965,7 +1966,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
    * And destroy the wait list
    */
   ofc_waitset_destroy(wait_set);
-  
+
   (*env)->ReleaseByteArrayElements (env,arrayB, jbBuffer, 0) ;
 
   if (jiBytesRead == 0)
@@ -2124,8 +2125,8 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_FileSystem_write__Lcom_connected
   wait_set = ofc_waitset_create();
   buffer_list = ofc_queue_create();
 
-  file_offset = jiOffset;
-  buffer_offset = 0;
+  file_offset = OfcSetFilePointer(hFile, 0, OFC_NULL, OFC_FILE_CURRENT);
+  buffer_offset = jiOffset;
   eof = OFC_FALSE;
   pending = 0;
       
