@@ -1358,7 +1358,7 @@ JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_statsHeap
   ofc_framework_stats_heap() ;
 }
   
-JNIEXPORT jobject JNICALL Java_com_connectedway_io_Framework_getConfig
+JNIEXPORT jbyteArray JNICALL Java_com_connectedway_io_Framework_getConfig
 (JNIEnv *env, jobject objFramework)
 {
   OFC_LPVOID buf;
@@ -1373,7 +1373,7 @@ JNIEXPORT jobject JNICALL Java_com_connectedway_io_Framework_getConfig
 }
 
 JNIEXPORT void JNICALL Java_com_connectedway_io_Framework_putConfig
-(JNIEnv *env, jobject objFramework, jobject plainConfig)
+(JNIEnv *env, jobject objFramework, jbyteArray plainConfig)
 {
   OFC_LPVOID buf;
   OFC_SIZET len;
