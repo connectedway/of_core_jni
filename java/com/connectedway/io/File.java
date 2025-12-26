@@ -555,6 +555,31 @@ public class File extends java.io.File {
 	}
 
 	/**
+	 * Get all file status (attributes, size, modified time) in a single call.
+	 * This is more efficient than calling exists(), length(), and lastModified()
+	 * separately as it makes only one SMB round-trip.
+	 *
+	 * After calling this method, the cached values for attributes, size, and
+	 * date will be populated, so subsequent calls to exists(), isDirectory(),
+	 * length(), lastModified(), etc. will be fast.
+	 *
+	 * @return true if the file exists and status was retrieved, false otherwise
+	 */
+	public boolean stat() {
+	    long[] statData = fs.getStat(this) ;
+	    if (statData != null) {
+		this.attributes = (int) statData[0] ;
+		this.attributesset = true ;
+		this.size = statData[1] ;
+		this.sizeset = true ;
+		this.date = statData[2] ;
+		this.dateset = true ;
+		return true ;
+	    }
+	    return false ;
+	}
+
+	/**
 	 * Returns the time that the file denoted by this abstract pathname was last
 	 * modified.
 	 * 

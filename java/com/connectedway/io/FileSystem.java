@@ -166,6 +166,20 @@ public class FileSystem {
      */
     public native long getLength(File f) ;
 
+    /**
+     * Get file status (attributes, size, and modified time) in a single call.
+     * This is more efficient than calling getBooleanAttributes, getLength,
+     * and getLastModifiedTime separately as it makes only one SMB round-trip.
+     *
+     * @param f The file to get status for
+     * @return A long array with 3 elements:
+     *         [0] = boolean attributes (same as getBooleanAttributes)
+     *         [1] = file size in bytes
+     *         [2] = last modified time in milliseconds since epoch
+     *         Returns null if the file does not exist or an error occurs.
+     */
+    public native long[] getStat(File f) ;
+
     /* -- File operations -- */
 
     /**

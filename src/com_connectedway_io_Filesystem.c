@@ -600,6 +600,82 @@ JNIEXPORT jlong JNICALL Java_com_connectedway_io_FileSystem_getLength
   return (size) ;
 }
 
+/*
+ * Class:     com_connectedway_io_FileSystem
+ * Method:    getStat
+ * Signature: (Lcom/connectedway/io/File;)[J
+ *
+ * Get file status (attributes, size, and modified time) in a single call.
+ * Returns a long array with 3 elements:
+ *   [0] = boolean attributes (same as getBooleanAttributes)
+ *   [1] = file size in bytes
+ *   [2] = last modified time in milliseconds since epoch
+ * Returns null if the file does not exist or an error occurs.
+ */
+JNIEXPORT jlongArray JNICALL Java_com_connectedway_io_FileSystem_getStat
+(JNIEnv *env, jobject objFs, jobject objFile)
+{
+  OFC_LPTSTR tstrPath ;
+  OFC_WIN32_FILE_ATTRIBUTE_DATA fadFile ;
+  jlongArray result = NULL ;
+  jlong statData[3] ;
+  jint booleanAttributes ;
+  jlong size ;
+  jlong modifiedTime ;
+  OFC_ULONG tv_sec ;
+  OFC_ULONG tv_nsec ;
+
+  ofc_thread_set_variable (OfcLastError,
+			   (OFC_DWORD_PTR) OFC_ERROR_SUCCESS) ;
+
+  tstrPath = file_get_path (env, objFile) ;
+
+  if (OfcGetFileAttributesExW (tstrPath,
+			       OfcGetFileExInfoStandard,
+			       &fadFile) == OFC_TRUE)
+    {
+      /* Extract boolean attributes */
+      booleanAttributes = com_connectedway_io_FileSystem_BA_EXISTS ;
+
+      if (fadFile.dwFileAttributes & OFC_FILE_ATTRIBUTE_DIRECTORY)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_DIRECTORY ;
+      else if (fadFile.dwFileAttributes & OFC_FILE_ATTRIBUTE_NORMAL ||
+	       fadFile.dwFileAttributes & OFC_FILE_ATTRIBUTE_ARCHIVE)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_REGULAR ;
+      if (fadFile.dwFileAttributes & OFC_FILE_ATTRIBUTE_BOOKMARK)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_BOOKMARK ;
+      if (fadFile.dwFileAttributes & OFC_FILE_ATTRIBUTE_HIDDEN)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_HIDDEN ;
+      if (fadFile.dwFileAttributes & OFC_FILE_FLAG_SHARE)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_SHARE ;
+      if (fadFile.dwFileAttributes & OFC_FILE_FLAG_SERVER)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_SERVER ;
+      if (fadFile.dwFileAttributes & OFC_FILE_FLAG_WORKGROUP)
+	booleanAttributes |= com_connectedway_io_FileSystem_BA_WORKGROUP ;
+
+      /* Extract file size */
+      size = ((jlong) fadFile.nFileSizeHigh << 32) | (jlong) fadFile.nFileSizeLow ;
+
+      /* Extract last modified time */
+      file_time_to_epoch_time (&fadFile.ftLastWriteTime, &tv_sec, &tv_nsec) ;
+      modifiedTime = ((jlong) tv_sec * 1000) + ((jlong) tv_nsec / (1000 * 1000)) ;
+
+      /* Create and populate the result array */
+      result = (*env)->NewLongArray(env, 3) ;
+      if (result != NULL)
+	{
+	  statData[0] = (jlong) booleanAttributes ;
+	  statData[1] = size ;
+	  statData[2] = modifiedTime ;
+	  (*env)->SetLongArrayRegion(env, result, 0, 3, statData) ;
+	}
+    }
+
+  ofc_free (tstrPath) ;
+
+  return (result) ;
+}
+
 void throwio (JNIEnv *env)
 {
   jclass newExcCls ;
