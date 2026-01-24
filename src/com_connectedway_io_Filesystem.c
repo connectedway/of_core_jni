@@ -679,13 +679,19 @@ JNIEXPORT jlongArray JNICALL Java_com_connectedway_io_FileSystem_getStat
 void throwio (JNIEnv *env)
 {
   jclass newExcCls ;
-  char code[10] ;
+  OFC_DWORD err = OfcGetLastError();
+  const OFC_CHAR *errstr = ofc_get_error_string(err);
+  char msg[64];
 
-  ofc_snprintf (code, 10, "%d", OfcGetLastError()) ;
+  if (errstr != OFC_NULL)
+    ofc_snprintf(msg, sizeof(msg), "%s", errstr);
+  else
+    ofc_snprintf(msg, sizeof(msg), "Error %d", err);
+
   newExcCls = (*env)->FindClass(env, "java/io/IOException");
   if (newExcCls != NULL)
     {
-      (*env)->ThrowNew(env, newExcCls, code) ;
+      (*env)->ThrowNew(env, newExcCls, msg) ;
       (*env)->DeleteLocalRef (env, newExcCls) ;
     }
 }
@@ -800,6 +806,8 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_delete
 
   if (retDelete == OFC_TRUE)
     ret = JNI_TRUE ;
+  else
+    throwio (env) ;
 
   return (ret) ;
 }
@@ -1199,9 +1207,10 @@ JNIEXPORT jboolean JNICALL Java_com_connectedway_io_FileSystem_rename
   ofc_free (tstrFrom) ;
   ofc_free (tstrTo) ;
 
-  ret = JNI_FALSE ;
   if (moveRet == OFC_TRUE)
       ret = JNI_TRUE ;
+  else
+      throwio (env) ;
 
   return (ret) ;
 }

@@ -626,7 +626,9 @@ public class File extends java.io.File {
 
 	/**
 	 * Deletes the file or directory denoted by this abstract pathname.
-	 * 
+	 * Note: The native implementation may throw an IOException with error details
+	 * if the delete operation fails.
+	 *
 	 * @see java.io.File#delete()
 	 */
 	public boolean delete() {

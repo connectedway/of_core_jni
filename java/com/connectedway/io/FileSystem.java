@@ -194,8 +194,9 @@ public class FileSystem {
     /**
      * Delete the file or directory denoted by the given abstract pathname,
      * returning <code>true</code> if and only if the operation succeeds.
+     * Note: May throw IOException with error details if the operation fails.
      */
-    public native boolean delete(File f) ;
+    public native boolean delete(File f);
 
     /**
      * List the elements of the directory denoted by the given abstract
