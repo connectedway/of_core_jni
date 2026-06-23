@@ -1893,6 +1893,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   OFC_BOOL eof ;
   OFC_LARGE_INTEGER file_offset;
   OFC_OFFT buffer_offset;
+  OFC_OFFT buffer_end;
   OFC_INT pending;
   OFC_HANDLE buffer_list;
   OFC_FILE_BUFFER *buffer;
@@ -1901,7 +1902,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   OFC_DWORD dwLen;
   ASYNC_RESULT result;
   OFC_HANDLE hEvent;
-  
+
 #if 0
   ofc_printf ("%s:%s:%d\n", __FILE__, __func__, __LINE__) ;
 #endif
@@ -1916,10 +1917,11 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
   /* Get current file position */
   file_offset = OfcSetFilePointer(hFile, 0, OFC_NULL, OFC_FILE_CURRENT);
   buffer_offset = jiOffset;
+  buffer_end = jiOffset + jiLen;
   eof = OFC_FALSE;
   pending = 0;
 
-  for (i = 0; i < NUM_FILE_BUFFERS && !eof && buffer_offset < jiLen; i++)
+  for (i = 0; i < NUM_FILE_BUFFERS && !eof && buffer_offset < buffer_end; i++)
     {
       /*
        * Get the buffer descriptor and the data buffer
@@ -1944,7 +1946,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
           ofc_enqueue(buffer_list, buffer);
 
           pending++;
-          dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+          dwLen = OFC_MIN(BUFFER_SIZE, buffer_end - buffer_offset);
           result = AsyncRead(wait_set, hFile, buffer, dwLen);
           if (result != ASYNC_RESULT_PENDING)
             {
@@ -2001,7 +2003,7 @@ JNIEXPORT jint JNICALL Java_com_connectedway_io_FileSystem_read__Lcom_connectedw
                 {
                   jiBytesRead += dwLen ;
 
-                  dwLen = OFC_MIN(BUFFER_SIZE, jiLen - buffer_offset);
+                  dwLen = OFC_MIN(BUFFER_SIZE, buffer_end - buffer_offset);
                   if (dwLen > 0)
                     {
                       buffer->data = (OFC_CHAR *) jbBuffer + buffer_offset ;
