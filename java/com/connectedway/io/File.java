@@ -438,7 +438,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_EXISTS) != 0;
+	    ret = (this.attributes & FileSystem.BA_EXISTS) != 0;
 	    return ret;
 	}
 
@@ -454,7 +454,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_DIRECTORY) != 0;
+	    ret = (this.attributes & FileSystem.BA_DIRECTORY) != 0;
 	    return ret;
 	}
 
@@ -469,7 +469,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_WORKGROUP) != 0;
+	    ret = (this.attributes & FileSystem.BA_WORKGROUP) != 0;
 	    return ret;
 	}
 
@@ -484,7 +484,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_SERVER) != 0;
+	    ret = (this.attributes & FileSystem.BA_SERVER) != 0;
 	    return ret;
 	}
 
@@ -499,7 +499,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_SHARE) != 0;
+	    ret = (this.attributes & FileSystem.BA_SHARE) != 0;
 	    return ret;
 	}
 
@@ -516,7 +516,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_REGULAR) != 0;
+	    ret = (this.attributes & FileSystem.BA_REGULAR) != 0;
 	    return ret;
 	}
 
@@ -532,7 +532,7 @@ public class File extends java.io.File {
 		this.attributes = fs.getBooleanAttributes(this) ;
 		this.attributesset = true ;
 	    }
-		ret = (this.attributes & FileSystem.BA_HIDDEN) != 0;
+	    ret = (this.attributes & FileSystem.BA_HIDDEN) != 0;
 	    return ret;
 	}
 
