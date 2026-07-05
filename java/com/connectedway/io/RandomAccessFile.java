@@ -217,13 +217,12 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      *
      * @see java.io.RandomAccessFile#close()
      */
-    public void close() throws IOException {
-	if (fd == null)
+    public synchronized void close() throws IOException {
+	FileDescriptor localFd = fd;
+	if (localFd == null)
 	    throw new IOException ("File already closed");
-	else {
-	    fs.close(fd) ;
-	    fd = null ;
-	}
+	fd = null;
+	fs.close(localFd) ;
     }
     
     /**
@@ -518,10 +517,15 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 	fs.write (fd, b, 0, b.length) ;
     }
 
-    protected void finalize() throws IOException {
-	if (fd != null) {
-	    close();
-	    fd = null ;
+    protected synchronized void finalize() {
+	FileDescriptor localFd = fd;
+	if (localFd == null) return;
+	fd = null;
+	try {
+	    fs.close(localFd);
+	} catch (IOException e) {
+	    /* finalize is best-effort; nothing to do if the underlying
+	     * close fails during GC-driven cleanup */
 	}
     }
 }
